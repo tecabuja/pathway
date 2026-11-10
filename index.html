@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pathway · The Elevation Church</title>
+<meta name="theme-color" content="#1F5A54">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="img/icon-192.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<!-- SIGN IN -->
+<div class="login" id="login" hidden>
+  <form class="lbox" id="loginForm" autocomplete="off">
+    <img class="logo-full" src="img/logo-full.png" alt="The Elevation Church">
+    <div style="text-align:center;margin-bottom:14px"><b style="font-size:17px">Pathway</b><div class="small muted">Worker sign-in</div></div>
+    <div class="banner red" id="noApi" hidden>This app is not connected to the church Sheet yet. Ask the admin to finish setup.</div>
+    <div class="f"><label for="ln">Your name</label><input class="inp" id="ln" placeholder="As written by the church admin" autocomplete="name"></div>
+    <div class="small muted" style="text-align:center;margin-top:14px">Enter your 4-digit PIN</div>
+    <div class="pin" id="pin">
+      <input inputmode="numeric" maxlength="1" type="password" aria-label="PIN digit 1"><input inputmode="numeric" maxlength="1" type="password" aria-label="PIN digit 2"><input inputmode="numeric" maxlength="1" type="password" aria-label="PIN digit 3"><input inputmode="numeric" maxlength="1" type="password" aria-label="PIN digit 4">
+    </div>
+    <div class="err" id="lerr"></div>
+    <button class="btn" id="lbtn" style="width:100%;padding:12px" type="submit">Sign in</button>
+    <div class="small muted" style="text-align:center;margin-top:12px">Forgot your PIN? Ask your church admin to set a new one.</div>
+  </form>
+</div>
+
+<div class="app" id="app" hidden>
+  <aside>
+    <div class="brand"><div class="mark"><img src="img/logo-mark.png" alt=""></div><div><b>Pathway</b><small id="churchName">The Elevation Church</small></div></div>
+    <div id="sidenav"></div>
+    <div class="foot" id="sidefoot"></div>
+  </aside>
+  <main>
+    <div class="top">
+      <h1 id="title">Capture convert</h1><span class="sp"></span>
+      <span class="pill" id="net"><span class="dot"></span><span id="netl">Online</span></span>
+      <button class="av" id="me" title="Sign out">--</button>
+    </div>
+    <div class="wrap" id="view"></div>
+  </main>
+</div>
+<nav class="mnav" id="mnav" hidden></nav>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script src="lib/qrcode.js"></script>
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

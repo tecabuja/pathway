@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Welcome to the family · The Elevation Church</title>
+<meta name="theme-color" content="#2E7770">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="img/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<style>body{background:linear-gradient(180deg,var(--teal-d) 0,var(--teal) 220px,var(--bg) 220px)}.reg{padding:24px 16px 40px}.phoneframe{width:420px}.hp{position:absolute;left:-9999px}</style>
+</head>
+<body>
+<div class="reg">
+  <div class="phoneframe">
+    <div class="hd"><div class="logo-chip"><img src="img/logo-full.png" alt="The Elevation Church"></div>
+      <b style="font-size:18px;display:block">Welcome to the family!</b><div class="small" style="opacity:.9">We're so glad you made this decision.</div></div>
+    <form class="bd" id="rf" autocomplete="on">
+      <div class="banner red" id="roff" hidden style="margin:0">📴 No internet right now. You can still submit; it will send automatically later.</div>
+      <div class="banner red" id="rbad" hidden style="margin:0">This QR code is not active. Please ask a church worker for help.</div>
+      <div class="f"><label for="rn">Full name *</label><input class="inp" id="rn" autocomplete="name" autocapitalize="words"></div>
+      <div class="f"><label for="rp">Phone (WhatsApp) *</label><div class="phone"><select class="inp" id="rcc" aria-label="Country code" style="width:110px"></select><input class="inp" id="rp" inputmode="tel" autocomplete="tel-national" placeholder="803 000 0000"></div></div>
+      <div class="f"><label for="re">Email (optional)</label><input class="inp" id="re" type="email" autocomplete="email"></div>
+      <div class="f"><label for="ra">Area you live in</label><input class="inp" id="ra" placeholder="e.g. Kubwa"></div>
+      <div class="f"><label>I made a decision to</label><div class="chips" data-g="decision"><span class="chip on">Give my life to Jesus</span><span class="chip">Rededicate my life</span><span class="chip">Just visiting</span></div></div>
+      <div class="f"><label for="rpr">How can we pray for you? (optional)</label><textarea class="inp" id="rpr" rows="2"></textarea></div>
+      <input class="hp" id="rw" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <label class="small"><input type="checkbox" id="rc"> I'm happy for the church to keep these details and contact me. *</label>
+      <div class="err" id="rerr"></div>
+      <button class="btn" id="rs" type="submit" style="padding:12px">Submit</button>
+      <div class="small muted" style="text-align:center">Takes under 60 seconds · works offline</div>
+    </form>
+    <div class="bd" id="rdone" hidden style="text-align:center;padding:30px 20px">
+      <div style="font-size:42px">🎉</div><b style="font-size:18px">Thank you!</b>
+      <p class="muted" id="rmsg">Someone from the church will reach out to you soon.</p>
+      <button class="btn ghost" id="ragain" type="button">Register someone else</button>
+    </div>
+  </div>
+  <p class="small muted" style="text-align:center;margin-top:16px">Your details are kept safely by The Elevation Church and used only to care for you.</p>
+</div>
+<div class="toast" id="toast"></div>
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script src="register.js"></script>
+</body>
+</html>
