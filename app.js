@@ -1,4 +1,5 @@
-/* Pathway worker app – build step 1: sign-in, capture convert (works offline), QR codes, saved-on-this-phone list. */
+/* Pathway worker app – shell, sign-in, capture convert (works offline), QR codes, saved-on-this-phone list.
+   Step 2 screens (follow-ups, converts, pathway board, members, small groups, stewards) live in tracker.js. */
 (function () {
   var P = window.Pathway, $ = function (id) { return document.getElementById(id); }, esc = P.esc;
   var ic = function (d) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; };
@@ -6,11 +7,17 @@
     add: ic('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>'),
     qr: ic('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/>'),
     sync: ic('<path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/>'),
-    out: ic('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>')
+    out: ic('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'),
+    more: ic('<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>')
   };
+  P.views = P.views || {};
   var NAV = { capture: ['Capture convert', I.add], qr: ['QR codes', I.qr], queue: ['Saved on this phone', I.sync] };
-  var BY_ROLE = { 'Admin': ['capture', 'qr', 'queue'], 'Leader': ['capture', 'qr', 'queue'], 'Follow-up worker': ['capture', 'queue'], 'Counsellor': ['capture', 'qr', 'queue'], 'Member': [] };
-  var VIEW = 'capture', USER = P.get('user'), QN = 0;
+  var STAFF_NAV = ['tasks', 'people', 'path', 'capture', 'qr', 'queue', 'members', 'groups', 'stewards'];
+  var BY_ROLE = { 'Admin': STAFF_NAV, 'Leader': STAFF_NAV, 'Follow-up worker': ['tasks', 'people', 'capture', 'queue'], 'Counsellor': ['capture', 'qr', 'queue'], 'Member': [] };
+  var SECT = { members: 'Church', groups: 'Church', stewards: 'Church' };
+  var SHORT = { tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards' };
+  function item(k) { return k === 'more' ? ['More', I.more] : (P.views[k] ? [P.views[k].title, P.views[k].icon] : NAV[k] || ['Welcome', '']); }
+  var VIEW = null, USER = P.get('user'), QN = 0;
 
   // ---------- Sign-in ----------
   function showLogin(msg) {
@@ -41,7 +48,8 @@
   function signOut() {
     if (!confirmBox(QN ? QN + ' capture(s) are still waiting to send. They stay on this phone and will send after you sign in again. Sign out?' : 'Sign out of Pathway on this phone?')) return;
     var t = P.get('token'); if (t && P.online()) P.call('logout', { token: t }).catch(function () {});
-    P.set('token', null); P.set('user', null); USER = null; showLogin();
+    if (P.clearCache) P.clearCache(); if (P.closeDrawer) P.closeDrawer();
+    P.set('token', null); P.set('user', null); USER = null; VIEW = null; showLogin();
   }
   function confirmBox(m) { return window.confirm(m); }
 
@@ -53,27 +61,47 @@
     $('me').title = USER.name + ' · ' + USER.role + ' · tap to sign out';
     $('sidefoot').innerHTML = esc(USER.name) + '<br><span style="opacity:.7">' + esc(USER.role) + (USER.campus ? ' · ' + esc(USER.campus) : '') + '</span>';
     var nav = BY_ROLE[USER.role] || [];
-    if (nav.indexOf(VIEW) < 0) VIEW = nav[0] || 'none';
+    if (nav.indexOf(VIEW) < 0 && VIEW !== 'more') VIEW = nav[0] || 'none';
     netState(); render(); trySync();
   }
   function navHtml() {
-    var nav = BY_ROLE[USER.role] || [];
-    $('sidenav').innerHTML = '<div class="navl">Convert pathway</div>' + nav.map(function (k) {
-      return '<button class="nav' + (k === VIEW ? ' on' : '') + '" data-go="' + k + '">' + NAV[k][1] + NAV[k][0] + (k === 'queue' && QN ? '<span class="ct">' + QN + '</span>' : '') + '</button>';
+    var nav = BY_ROLE[USER.role] || [], last = null, cnt = { queue: QN, tasks: P.taskCount || 0 };
+    $('sidenav').innerHTML = nav.map(function (k) {
+      var l = SECT[k] || 'Convert pathway', h = '', it = item(k);
+      if (l !== last) { h = '<div class="navl">' + l + '</div>'; last = l; }
+      return h + '<button class="nav' + (k === VIEW ? ' on' : '') + '" data-go="' + k + '">' + it[1] + it[0] + (cnt[k] ? '<span class="ct">' + cnt[k] + '</span>' : '') + '</button>';
     }).join('') + '<div class="navl">Account</div><button class="nav" data-out="1">' + I.out + 'Sign out</button>';
+    var mob = nav.length > 5 ? nav.slice(0, 4).concat(['more']) : nav;
     $('mnav').hidden = nav.length < 2;
-    $('mnav').innerHTML = nav.map(function (k) {
-      return '<button class="' + (k === VIEW ? 'on' : '') + '" data-go="' + k + '">' + NAV[k][1] + (k === 'queue' ? 'Saved' + (QN ? ' (' + QN + ')' : '') : NAV[k][0].split(' ')[0]) + '</button>';
+    $('mnav').innerHTML = mob.map(function (k) {
+      var it = item(k), on = k === VIEW || (k === 'more' && mob.indexOf(VIEW) < 0);
+      var lbl = k === 'queue' ? 'Saved' + (QN ? ' (' + QN + ')' : '') : (SHORT[k] || it[0].split(' ')[0]) + (cnt[k] && k !== 'queue' ? ' (' + cnt[k] + ')' : '');
+      return '<button class="' + (on ? 'on' : '') + '" data-go="' + k + '">' + it[1] + lbl + '</button>';
     }).join('');
   }
+  function vMore() {
+    var nav = BY_ROLE[USER.role] || [];
+    return '<div class="card">' + nav.map(function (k) {
+      var it = item(k);
+      return '<div class="row click" data-go="' + k + '"><div class="av" style="background:var(--teal-l);color:var(--teal)">' + it[1].replace('<svg', '<svg width="18" height="18"') + '</div><div class="meta"><b>' + it[0] + '</b></div><span class="muted">›</span></div>';
+    }).join('') + '<div class="row click" data-out="1"><div class="av">' + I.out.replace('<svg', '<svg width="18" height="18"') + '</div><div class="meta"><b>Sign out</b><span>' + esc(USER.name) + ' · ' + esc(USER.role) + '</span></div></div></div>';
+  }
+  P.app = {
+    user: function () { return USER; }, view: function () { return VIEW; },
+    go: function (k) { VIEW = k; render(); window.scrollTo(0, 0); },
+    render: function () { render(); }, nav: function () { if (USER) navHtml(); },
+    showLogin: function (m) { showLogin(m); }
+  };
   document.addEventListener('click', function (e) {
-    var g = e.target.closest('[data-go]'); if (g) { VIEW = g.dataset.go; render(); window.scrollTo(0, 0); return; }
+    var g = e.target.closest('[data-go]'); if (g) { if (P.closeDrawer) P.closeDrawer(); VIEW = g.dataset.go; render(); window.scrollTo(0, 0); return; }
     if (e.target.closest('[data-out]') || e.target.closest('#me')) signOut();
   });
   function render() {
     navHtml();
-    $('title').textContent = (NAV[VIEW] || ['Welcome'])[0];
+    $('title').textContent = item(VIEW)[0];
     var v = $('view');
+    if (VIEW === 'more') { v.innerHTML = vMore(); return; }
+    if (P.views[VIEW]) { P.views[VIEW].render(v); return; }
     if (VIEW === 'capture') { v.innerHTML = vCapture(); bindCapture(); }
     else if (VIEW === 'qr') { v.innerHTML = vQR(); bindQR(); }
     else if (VIEW === 'queue') { v.innerHTML = '<div class="card muted">Loading…</div>'; vQueue(); }
