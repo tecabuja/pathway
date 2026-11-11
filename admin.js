@@ -16,7 +16,7 @@
     settings: 'Rules the whole app follows. Tap a rule to change it.'
   };
   var SEC = 'overview';
-  function secs() { return T.user().role === 'Admin' ? SEC_ADMIN : SEC_LEADER; }
+  function secs() { return (T.user().role === 'Admin' ? SEC_ADMIN : SEC_LEADER).map(function (x) { return [x[0], P.cwText(x[1])]; }); }
 
   P.views.admin = { title: 'Admin & settings', icon: ICON, render: function (v) {
     var ss = secs(); if (!ss.some(function (s) { return s[0] === SEC; })) SEC = ss[0][0];
@@ -40,8 +40,8 @@
       var vis = d.fields.filter(function (f) { return f.k !== 'Active' && f.k !== 'What it means'; }).slice(0, list === 'routes' ? 5 : 4);
       var html = '<div class="card tablecard"><h3 style="padding-top:10px">' + esc(title || (secs().filter(function (s) { return s[0] === list; })[0] || [0, list])[1]) + '<span class="sp"></span>' +
         '<input class="inp" data-q="' + list + '" placeholder="Search" style="width:160px;padding:6px 10px">' + (d.canAdd ? '<button class="btn sm" data-new="' + list + '">+ Add</button>' : '') + '</h3>' +
-        (INTRO[list] ? '<p class="small muted" style="margin:-4px 0 8px">' + INTRO[list] + '</p>' : '') +
-        '<table><thead><tr>' + vis.map(function (f, i) { return '<th' + (i > 1 ? ' class="hm"' : '') + '>' + esc(f.l) + '</th>'; }).join('') + (d.hasActive ? '<th>Active</th>' : '') + (list === 'workers' ? '<th>Sign-in</th>' : '') + '</tr></thead><tbody data-rows="' + list + '">' +
+        (INTRO[list] ? '<p class="small muted" style="margin:-4px 0 8px">' + P.cwText(INTRO[list]) + '</p>' : '') +
+        '<table><thead><tr>' + vis.map(function (f, i) { return '<th' + (i > 1 ? ' class="hm"' : '') + '>' + esc(P.cwText(f.l)) + '</th>'; }).join('') + (d.hasActive ? '<th>Active</th>' : '') + (list === 'workers' ? '<th>Sign-in</th>' : '') + '</tr></thead><tbody data-rows="' + list + '">' +
         d.rows.map(function (r) {
           return '<tr class="click" data-edit="' + esc(r._key) + '" data-list="' + list + '" data-s="' + esc(Object.keys(r).map(function (k) { return r[k]; }).join(' ').toLowerCase()) + '">' + vis.map(function (f, i) { return '<td' + (i > 1 ? ' class="hm"' : '') + '>' + (i === 0 ? '<b>' + cell(f, r) + '</b>' : cell(f, r)) + '</td>'; }).join('') +
             (d.hasActive ? '<td>' + cell({ t: 'yesno', k: 'Active' }, r) + '</td>' : '') +
@@ -65,7 +65,7 @@
 
   function input(f, val, r) {
     var id = 'af_' + f.k.replace(/\W/g, '_'), v = val == null ? '' : val;
-    if (f.ro) return '<div class="f full"><label>' + esc(f.l) + '</label><div style="padding:6px 0">' + esc(v || '—') + '</div></div>';
+    if (f.ro) return '<div class="f full"><label>' + esc(P.cwText(f.l)) + '</label><div style="padding:6px 0">' + esc(v || '—') + '</div></div>';
     var opts = f.options, t = f.t;
     if (r && r._opts && f.k === 'Value') { t = 'select'; opts = r._opts; }
     if (r && r._num && f.k === 'Value') t = 'number';
@@ -74,12 +74,12 @@
     else if (t === 'select') el = '<select class="inp" id="' + id + '">' + T.opts(opts || [], v, f.blank || '—') + '</select>';
     else if (t === 'suggest') el = '<input class="inp" id="' + id + '" list="' + id + '_l" value="' + esc(v) + '" placeholder="Choose or type"><datalist id="' + id + '_l">' + (opts || []).map(function (o) { return '<option value="' + esc(o) + '">'; }).join('') + '</datalist>';
     else el = '<input class="inp" id="' + id + '" type="' + (t === 'number' ? 'number' : 'text') + '" value="' + esc(v) + '"' + (t === 'number' ? ' inputmode="numeric"' : '') + '>';
-    return '<div class="f' + (f.k === 'What it means' || f.k === 'Notes' ? ' full' : '') + '"><label for="' + id + '">' + esc(f.l) + (f.req ? ' *' : '') + '</label>' + el + (f.help ? '<div class="small muted" style="margin-top:4px">' + esc(f.help) + '</div>' : '') + '</div>';
+    return '<div class="f' + (f.k === 'What it means' || f.k === 'Notes' ? ' full' : '') + '"><label for="' + id + '">' + esc(P.cwText(f.l)) + (f.req ? ' *' : '') + '</label>' + el + (f.help ? '<div class="small muted" style="margin-top:4px">' + esc(f.help) + '</div>' : '') + '</div>';
   }
   function openForm(list, key) {
     var d = CACHE[list]; if (!d) return;
     var r = key ? d.rows.filter(function (x) { return x._key === key; })[0] : null, isNew = !r;
-    var title = isNew ? 'Add ' + ({ workers: 'worker', campuses: 'campus', events: 'event', stages: 'stage', groups: 'small group', departments: 'department', routes: 'request type', approvers: 'approver' }[list] || 'item') : (r._key + '');
+    var title = isNew ? 'Add ' + ({ workers: 'worker', campuses: P.cw(0, 1), events: 'event', stages: 'stage', groups: 'small group', departments: 'department', routes: 'request type', approvers: 'approver' }[list] || 'item') : (r._key + '');
     var sub = list === 'workers' && r ? (r.Active === 'No' ? 'Removed' : r._locked ? 'Locked: give a new PIN to unlock' : !r._pin ? 'No PIN yet: set one below' : 'Last sign-in ' + (r._last ? T.fmt(r._last) : 'never')) : '';
     var h = T.dhead(title, esc(sub)) + '<div class="db"><div class="card"><div class="form">' + d.fields.map(function (f) { return input(f, r ? r[f.k] : (f.k === 'Active' ? 'Yes' : ''), r); }).join('') +
       (list === 'workers' ? '<div class="f"><label for="af_pin">' + (isNew ? 'PIN (4 digits) *' : 'New PIN (leave blank to keep)') + '</label><input class="inp" id="af_pin" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••"><div class="small muted" style="margin-top:4px">Tell the person their PIN privately. They can change it in My space.</div></div>' : '') +
@@ -94,8 +94,8 @@
       T.busy(b, true);
       T.api('adminSave', { list: list, key: isNew ? '' : r._key, values: vals }).then(function (j) {
         P.toast('Saved ✓' + (j.updated ? ' Updated in ' + j.updated + ' places.' : '') + (j.pinCleared ? ' Name changed: set a new PIN for them.' : ''));
-        T.stale('lookups', 'people', 'members', 'groups', 'stewards'); P.set('config', null); P.refreshConfig();
-        P.closeDrawer(); P.app.render();
+        T.stale('lookups', 'people', 'members', 'groups', 'stewards'); P.closeDrawer();
+        P.refreshConfig().then(function () { P.app.render(); });
       }).catch(function (e) { T.busy(b, false); P.toast(e.message); });
     };
     if ($('af_rm')) $('af_rm').onclick = function () {
@@ -159,7 +159,7 @@
   var today = function () { return new Date().toISOString().slice(0, 10); };
   function backup(box) {
     box.innerHTML = '<div class="grid g2" style="align-items:start"><div class="card"><h3>Full backup</h3><p class="small" style="margin-top:-4px">Downloads everything (except PINs) as one Excel workbook, one sheet per list. Do this once a month and keep the file safely.</p><button class="btn" id="bfull">Download full backup (Excel)</button></div>' +
-      '<div class="card"><h3>Reports</h3><p class="small" style="margin-top:-4px">The Dashboard is the church report. Open it, choose a campus if needed, then tap <b>Print report</b> to print or save it as PDF.</p><button class="btn ghost sm" data-go="dash">Open the Dashboard</button></div></div>' +
+      '<div class="card"><h3>Reports</h3><p class="small" style="margin-top:-4px">The Dashboard is the church report. Open it, choose a ' + P.esc(P.cw(0,1)) + ' if needed, then tap <b>Print report</b> to print or save it as PDF.</p><button class="btn ghost sm" data-go="dash">Open the Dashboard</button></div></div>' +
       '<div class="card" style="margin-top:16px"><h3>Download one list (opens in Excel)</h3><div style="display:flex;gap:8px;flex-wrap:wrap">' + TABLES.map(function (t) { return '<button class="btn ghost sm" data-exp="' + esc(t[0]) + '">' + esc(t[1]) + '</button>'; }).join('') + '</div></div>';
     $('bfull').onclick = function () {
       var b = this; T.busy(b, true); b.textContent = 'Preparing…';

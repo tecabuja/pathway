@@ -14,6 +14,9 @@
     stages: [{ n: 1, name: 'Missions / Altar Call' }]
   };
 
+  // What the church calls a campus (Admin & settings > Rules > Campus word). cw(plural, lower).
+  P.cw = function (pl, lo) { var c = P.config() || {}, s = pl ? (c.campusWords || 'Campuses') : (c.campusWord || 'Campus'); return lo ? s.toLowerCase() : s; };
+  P.cwText = function (t) { return String(t == null ? '' : t).replace(/\b(Campuses|campuses|Campus|campus)\b/g, function (m) { return P.cw(/es$/.test(m), m[0] === 'c'); }); };
   P.get = function (k, d) { try { var v = localStorage.getItem('pw_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   P.set = function (k, v) { try { if (v == null) localStorage.removeItem('pw_' + k); else localStorage.setItem('pw_' + k, JSON.stringify(v)); } catch (e) {} };
   P.uid = function () { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); };

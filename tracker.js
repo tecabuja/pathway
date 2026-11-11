@@ -127,7 +127,7 @@
   }
   function drawPeopleTable() {
     var ps = peopleRows();
-    $('ptable').innerHTML = '<table><thead><tr><th>Name</th><th>Stage</th><th class="hm">Campus · Area</th><th class="hm">In charge</th><th class="hm">Last contact</th><th>Status</th></tr></thead><tbody>' +
+    $('ptable').innerHTML = '<table><thead><tr><th>Name</th><th>Stage</th><th class="hm">' + P.esc(P.cw()) + ' · Area</th><th class="hm">In charge</th><th class="hm">Last contact</th><th>Status</th></tr></thead><tbody>' +
       (ps.map(function (p) {
         return '<tr class="click" data-person="' + esc(p.id) + '"><td><div style="display:flex;gap:10px;align-items:center"><div class="av">' + esc(ini(nm(p))) + '</div><div><b>' + esc(nm(p)) + '</b>' + (p.dup ? ' <span class="tag amber" title="Same phone as ' + esc(p.dup) + '">Check duplicate</span>' : '') + '<div class="small muted">' + esc(p.phone) + '</div></div></div></td>' +
           '<td><span class="tag">' + p.stage + '. ' + esc(short(p.stage)) + '</span></td><td class="hm">' + esc(p.campus || '—') + (p.area ? ' · ' + esc(p.area) : '') + '</td>' +
@@ -150,7 +150,7 @@
       $('pstage').onchange = function () { F.stage = +this.value; drawPeopleTable(); };
       $('pseg').onclick = function (e) { var b = e.target.closest('[data-st]'); if (!b) return; F.status = b.dataset.st; [].forEach.call(this.children, function (x) { x.classList.toggle('on', x === b); }); drawPeopleTable(); };
       if ($('pexp')) $('pexp').onclick = function () {
-        csv('Pathway converts', [['ID', 'First name', 'Last name', 'Phone', 'Email', 'Campus', 'Area', 'Stage', 'In charge', 'Small group', 'Status', 'Last contact', 'Source', 'Created']].concat(peopleRows().map(function (p) {
+        csv('Pathway converts', [['ID', 'First name', 'Last name', 'Phone', 'Email', P.cw(), 'Area', 'Stage', 'In charge', 'Small group', 'Status', 'Last contact', 'Source', 'Created']].concat(peopleRows().map(function (p) {
           return [p.id, p.first, p.last, p.phone, p.email, p.campus, p.area, p.stage + '. ' + stageName(p.stage), p.owner, p.group, p.status, fmt(p.lastContact), p.source, fmt(p.created)];
         })));
       };
@@ -176,7 +176,7 @@
           var c = ps.filter(function (p) { return p.stage === s.n; });
           return '<div class="col"><h4><span>' + s.n + '. ' + esc(s.name) + '</span><span class="tag">' + c.length + '</span></h4>' + c.map(function (p) {
             var d = daysIn(p.stageDate);
-            return '<div class="pc" data-person="' + esc(p.id) + '"><b>' + esc(nm(p)) + '</b><span class="muted">' + esc(p.campus || 'Campus not set') + ' · ' + esc(p.owner) + '</span><div class="ft">' + stTag(p.status) + '<span class="muted">' + (d == null ? '' : d + 'd here') + '</span>' +
+            return '<div class="pc" data-person="' + esc(p.id) + '"><b>' + esc(nm(p)) + '</b><span class="muted">' + esc(p.campus || P.cw() + ' not set') + ' · ' + esc(p.owner) + '</span><div class="ft">' + stTag(p.status) + '<span class="muted">' + (d == null ? '' : d + 'd here') + '</span>' +
               (i < st.length - 1 ? '<button class="btn sm" data-advance="' + esc(p.id) + '" data-to="' + st[i + 1].n + '" title="Move to ' + esc(st[i + 1].name) + '">→</button>' : '') + '</div></div>';
           }).join('') + '</div>';
         }).join('') + '</div>';
@@ -229,7 +229,7 @@
       '<div><span class="k">Small group</span><select class="inp" id="pgroup" style="padding:6px">' + opts(groups, p.group, groups.length ? 'Not in a group yet' : 'No groups in the Sheet yet') + '</select></div>' +
       (canP ? '<div><span class="k">Status</span><select class="inp" id="pstatus" style="padding:6px">' + opts(L.statuses || ['New', 'Active', 'Moved away', 'Not interested'], (L.statuses || []).indexOf(p.status) >= 0 ? p.status : 'Active') + '</select></div>' : '') +
       '<div><span class="k">Members directory</span>' + (p.isMember ? '<span class="tag green">✓ Member</span>' : '<span class="muted">Joins after Membership Class</span>') + '</div></div>';
-    if (p.suggest && p.suggest.length) h += '<div class="warn" style="margin-top:12px"><b>Suggested small groups</b> (same campus, nearest area, with space):<br>' + p.suggest.map(function (g) {
+    if (p.suggest && p.suggest.length) h += '<div class="warn" style="margin-top:12px"><b>Suggested small groups</b> (same ' + P.esc(P.cw(0,1)) + ', nearest area, with space):<br>' + p.suggest.map(function (g) {
       return '<button class="btn ghost sm" style="margin:6px 6px 0 0" data-pickgroup="' + esc(g.name) + '">' + esc(g.name) + ' · ' + esc(g.day || '') + ' · ' + g.members + '/' + g.capacity + (g.near ? ' · near' : '') + '</button>';
     }).join('') + '</div>';
     if ((p.history || []).length) h += '<div class="small" style="margin-top:14px"><b>Stage history</b>' + p.history.slice().reverse().map(function (x) {
@@ -240,7 +240,7 @@
     var ms = L.milestones || ['Water baptism', 'Serving team'];
     h += '<div class="card"><h3>Details<span class="sp"></span>' + (!p.offline && (canP || p.owner === user().name) ? '<button class="btn ghost sm" id="pedit">Edit details</button>' : '') + '</h3><div class="kv">' +
       '<div><span class="k">Phone</span>' + esc(p.phone) + (p.wa ? ' <span class="tag green">WhatsApp</span>' : '') + '</div><div><span class="k">Email</span>' + esc(p.email || '—') + '</div>' +
-      '<div><span class="k">Gender · Age</span>' + esc(p.gender || '—') + ' · ' + esc(p.age || '—') + '</div><div><span class="k">Campus · Area</span>' + esc(p.campus || '—') + ' · ' + esc(p.area || '—') + '</div>' +
+      '<div><span class="k">Gender · Age</span>' + esc(p.gender || '—') + ' · ' + esc(p.age || '—') + '</div><div><span class="k">' + P.esc(P.cw()) + ' · Area</span>' + esc(p.campus || '—') + ' · ' + esc(p.area || '—') + '</div>' +
       '<div><span class="k">Language · Prefers</span>' + esc(p.lang || '—') + ' · ' + esc(p.contact || '—') + '</div><div><span class="k">Captured by</span>' + esc(p.capturedBy || '—') + '</div>' +
       '<div><span class="k">Care needs</span>' + ((p.needs || []).length ? p.needs.map(function (n) { return '<span class="tag amber">' + esc(n) + '</span>'; }).join(' ') : '—') + '</div>' +
       '<div><span class="k">Consent</span>' + (p.consent ? '✓ Given ' + fmt(p.consentDate) : (p.offline ? '—' : '✗ Not recorded')) + '</div>' +
@@ -295,7 +295,7 @@
       '<div class="f"><label for="e5">Gender</label>' + sel('e5', ['Female', 'Male'], p.gender, '—') + '</div><div class="f"><label for="e6">Age range</label>' + sel('e6', ['Under 13', '13–17', '18–24', '25–34', '35–44', '45+'], p.age, '—') + '</div>' +
       '<div class="f"><label for="e7">Area</label><input class="inp" id="e7" value="' + esc(p.area) + '"></div><div class="f"><label for="e8">Language</label>' + sel('e8', P.LANGS, p.lang, '—') + '</div>' +
       '<div class="f"><label for="e9">Preferred contact</label>' + sel('e9', ['WhatsApp', 'Call', 'SMS', 'Email', 'Visit'], p.contact, '—') + '</div>' +
-      (pastoral() ? '<div class="f"><label for="e10">Campus</label>' + sel('e10', (S.lookups && S.lookups.campuses) || [], p.campus, '—') + '</div>' : '') +
+      (pastoral() ? '<div class="f"><label for="e10">' + P.esc(P.cw()) + '</label>' + sel('e10', (S.lookups && S.lookups.campuses) || [], p.campus, '—') + '</div>' : '') +
       '<div class="f full"><label>Care needs</label><div class="chips" id="eneeds">' + P.NEEDS.filter(function (n) { return n !== 'None'; }).map(function (n) { return '<span class="chip' + ((p.needs || []).indexOf(n) >= 0 ? ' on' : '') + '" role="button" tabindex="0">' + esc(n) + '</span>'; }).join('') + '</div></div>' +
       '<div class="full" style="display:flex;justify-content:flex-end"><button class="btn" id="esave">Save</button></div></div></div></div>');
     $('eneeds').onclick = function (e) { var c = e.target.closest('.chip'); if (c) c.classList.toggle('on'); };
@@ -323,7 +323,7 @@
   }
   function drawMembers() {
     var ms = memberRows();
-    $('mtable').innerHTML = '<table><thead><tr><th>Name</th><th>Role</th><th class="hm">Small group</th><th class="hm">Department</th><th class="hm">Campus · Area</th><th class="hm">Birthday</th></tr></thead><tbody>' +
+    $('mtable').innerHTML = '<table><thead><tr><th>Name</th><th>Role</th><th class="hm">Small group</th><th class="hm">Department</th><th class="hm">' + P.esc(P.cw()) + ' · Area</th><th class="hm">Birthday</th></tr></thead><tbody>' +
       (ms.map(function (m) {
         return '<tr class="click" data-member="' + esc(m.key) + '"><td><div style="display:flex;gap:10px;align-items:center"><div class="av">' + esc(ini(m.name)) + '</div><div><b>' + esc(m.name) + '</b><div class="small muted">' + (m.joined ? 'Member since ' + fmt(m.joined) : esc(m.phone)) + '</div></div></div></td><td>' + roleTag(m.role) + '</td>' +
           '<td class="hm">' + esc(m.group || '—') + '</td><td class="hm">' + esc(m.dept || '—') + '</td><td class="hm">' + esc(m.campus || '—') + (m.area ? ' · ' + esc(m.area) : '') + '</td><td class="hm">' + esc(m.bmonth || '—') + '</td></tr>';
@@ -345,7 +345,7 @@
       $('mbday').onclick = function () { MF.bday = !MF.bday; P.app.render(); };
       $('madd').onclick = function () { openMember(''); };
       $('mexp').onclick = function () {
-        csv('Pathway members', [['Name', 'Phone', 'Role', 'Small group', 'Department', 'Campus', 'Area', 'Birthday month', 'Member since', 'Steward training']].concat(memberRows().map(function (m) {
+        csv('Pathway members', [['Name', 'Phone', 'Role', 'Small group', 'Department', P.cw(), 'Area', 'Birthday month', 'Member since', 'Steward training']].concat(memberRows().map(function (m) {
           return [m.name, m.phone, m.role, m.group, m.dept, m.campus, m.area, m.bmonth, fmt(m.joined), m.training];
         })));
       };
@@ -366,7 +366,7 @@
     h += '<div class="card"><h3>Profile</h3><div class="form">' +
       '<div class="f"><label for="mname">Full name *</label><input class="inp" id="mname" value="' + esc(m.name) + '"></div>' +
       '<div class="f"><label for="mphone">Phone</label><input class="inp" id="mphone" inputmode="tel" value="' + esc(m.phone || '') + '"></div>' +
-      '<div class="f"><label for="mcamp">Campus</label><select class="inp" id="mcamp">' + opts(L.campuses || [], m.campus, '—') + '</select></div>' +
+      '<div class="f"><label for="mcamp">' + P.esc(P.cw()) + '</label><select class="inp" id="mcamp">' + opts(L.campuses || [], m.campus, '—') + '</select></div>' +
       '<div class="f"><label for="marea">Area</label><input class="inp" id="marea" value="' + esc(m.area || '') + '"></div>' +
       '<div class="f"><label for="mrole">Role</label><select class="inp" id="mrole">' + opts(L.memberRoles || ['Member'], m.role) + '</select></div>' +
       '<div class="f"><label for="mgroup">Small group</label><select class="inp" id="mgroup">' + opts((L.groups || []).map(function (g) { return g.name; }), m.group, 'Not in a group') + '</select></div>' +
@@ -403,8 +403,8 @@
           return '<tr class="click" data-group="' + esc(g.name) + '"><td><b>' + esc(g.name) + '</b>' + (g.over ? ' <span class="tag gold">Multiply</span>' : '') + '<div class="small muted">' + esc(g.area || '—') + (g.campus ? ' · ' + esc(g.campus) : '') + '</div></td><td class="hm">' + esc(g.leader || '—') + '</td><td class="hm">' + esc(g.day || '—') + '</td>' +
             '<td style="min-width:110px"><div class="bar"><i style="width:' + pct + '%;background:' + (g.over ? 'var(--gold)' : 'var(--teal)') + '"></i></div><span class="small muted">' + g.members + ' / ' + g.capacity + (g.avg != null ? ' · avg ' + g.avg + ' attend' : '') + '</span></td></tr>';
         }).join('') || '<tr><td colspan="4" class="empty">No small groups yet. Add them in the Groups tab of the church Sheet.</td></tr>') + '</tbody></table>' +
-        '<div class="small muted" style="margin:10px 0">Gold bar = over capacity. When a convert reaches the Small Group stage, their profile suggests the nearest group in their campus that still has space.</div></div>' +
-        '<div class="card"><h3>Adding or changing a group</h3><p class="small">1. Open the church Sheet and go to the <b>Groups</b> tab.<br>2. One row per group: name, location / area, campus, leader, meeting day and capacity (how many people it can hold).<br>3. Set Active to <b>Yes</b>. To close a group, set it to <b>No</b>.<br>4. Come back here and tap Refresh.</p><button class="btn ghost sm" data-reload="1">Refresh</button></div></div>';
+        '<div class="small muted" style="margin:10px 0">Gold bar = over capacity. When a convert reaches the Small Group stage, their profile suggests the nearest group in their ' + P.esc(P.cw(0,1)) + ' that still has space.</div></div>' +
+        '<div class="card"><h3>Adding or changing a group</h3><p class="small">1. Open the church Sheet and go to the <b>Groups</b> tab.<br>2. One row per group: name, location / area, ' + P.esc(P.cw(0,1)) + ', leader, meeting day and capacity (how many people it can hold).<br>3. Set Active to <b>Yes</b>. To close a group, set it to <b>No</b>.<br>4. Come back here and tap Refresh.</p><button class="btn ghost sm" data-reload="1">Refresh</button></div></div>';
     }).catch(function (e) { if (!gone(tk, vw)) fail(v, e); });
   } };
   function openGroup(name) {

@@ -175,7 +175,7 @@
       '<div class="full warn" id="dup" hidden></div>' +
       '<div class="f"><label>Gender</label>' + chips('gender', ['Female', 'Male']) + '</div>' +
       '<div class="f"><label>Age range</label>' + chips('age', ['Under 13', '13–17', '18–24', '25–34', '35–44', '45+']) + '</div>' +
-      '<div class="f"><label for="ccamp">Campus</label><select class="inp" id="ccamp">' + camps.map(function (c) { return '<option' + (c === USER.campus ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="f"><label for="ccamp">' + P.esc(P.cw()) + '</label><select class="inp" id="ccamp">' + camps.map(function (c) { return '<option' + (c === USER.campus ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></div>' +
       '<div class="f"><label for="carea">Area / neighbourhood</label><input class="inp" id="carea" placeholder="e.g. Kubwa"></div>' +
       '<div class="f"><label>Preferred contact</label>' + chips('contact', ['WhatsApp', 'Call', 'SMS', 'Email', 'Visit']) + '</div>' +
       '<div class="f"><label for="clang">Preferred language</label><select class="inp" id="clang">' + P.LANGS.map(function (x) { return '<option>' + x + '</option>'; }).join('') + '</select></div>' +
@@ -273,7 +273,7 @@
       '<div id="poster"><img src="img/logo-full.png" alt="" style="width:180px;margin:0 auto 8px;display:block"><div class="qrbox" id="qimg"></div>' +
       '<p style="font-weight:700;margin:12px 0 2px">Scan to say: “I made a decision today”</p><p class="small muted" id="qtxt" style="word-break:break-all;margin:0"></p></div>' +
       '<div class="noprint" style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn gold" id="qprint">Print poster</button><button class="btn ghost" id="qcopy">Copy link</button><a class="btn ghost" id="qopen" target="_blank" rel="noopener">Open form</a></div></div>' +
-      '<div class="card noprint"><h3>How to add an event</h3><p class="small">1. In the church Sheet, open the <b>Events</b> tab.<br>2. Add a row: a short code (for example <b>KUBWA-MISSION-DEC</b>), the event name, and the campus if it belongs to one.<br>3. Set Active to <b>Yes</b>.<br>4. Sign out and back in on this phone; the event appears in the list above.</p><p class="small muted">The form works offline too: if the person\'s phone has no data, it saves and sends later.</p></div></div>';
+      '<div class="card noprint"><h3>How to add an event</h3><p class="small">1. In the church Sheet, open the <b>Events</b> tab.<br>2. Add a row: a short code (for example <b>KUBWA-MISSION-DEC</b>), the event name, and the ' + P.esc(P.cw(0,1)) + ' if it belongs to one.<br>3. Set Active to <b>Yes</b>.<br>4. Sign out and back in on this phone; the event appears in the list above.</p><p class="small muted">The form works offline too: if the person\'s phone has no data, it saves and sends later.</p></div></div>';
   }
   function bindQR() {
     var draw = function () {

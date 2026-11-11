@@ -80,7 +80,7 @@
       v.innerHTML = '<div class="banner">' + (pub ? '✏️ Editing a <b>published</b> grid. When you save, only the people whose part changed are told again.' : '📝 Draft: nobody is told until you press <b>Publish</b>.') + ' Times work themselves out from the start times and minutes.</div>' +
         '<div class="card"><div class="form">' + f('title', 'Service name') +
         '<div class="f"><label>Type</label><select class="inp" data-sv="type">' + T.opts(L.types, s.type) + '</select></div>' + f('date', 'Date', 'date') + f('venue', 'Venue') +
-        '<div class="f"><label>Campus</label><select class="inp" data-sv="campus">' + T.opts(L.campuses, s.campus, 'All / not specific') + '</select></div>' +
+        '<div class="f"><label>' + P.esc(P.cw()) + '</label><select class="inp" data-sv="campus">' + T.opts(L.campuses, s.campus, 'All / not specific') + '</select></div>' +
         f('callup', 'Call-up time / service brief', 'text', '8:00 am') + f('preStart', 'Pre-service starts', 'text', '8:10 am') + f('start', 'Service starts', 'text', '9:00 am') +
         '<div class="f full"><label>Notes for the team (optional)</label><input class="inp" data-sv="notes" value="' + esc(s.notes || '') + '"></div></div></div>' +
         SECTIONS.map(function (sec) {
