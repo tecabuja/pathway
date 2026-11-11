@@ -30,6 +30,17 @@
     $('firstSet').hidden = true;
     if (P.API && P.online()) P.call('config').then(function (c) { $('firstSet').hidden = !c.needsSetup; }).catch(function () {});
   }
+  $('mvbtn').onclick = function () {
+    var name = $('mvname').value.trim(), pin = $('mvpin').value.trim();
+    if (!name || !/^\d{4}$/.test(pin)) { $('lerr').textContent = 'Enter your admin name and 4-digit PIN'; return; }
+    $('mvbtn').disabled = true; $('mvbtn').textContent = 'Moving… please wait';
+    P.call('migrateFromSheet', { name: name, pin: pin }).then(function (j) {
+      P.set('token', j.token); P.set('user', j.user); P.set('lastName', name); USER = j.user;
+      if (P.clearCache) P.clearCache();
+      return P.refreshConfig();
+    }).then(function () { start(); P.app.go('admin'); P.toast('All data moved ✓ Welcome to the faster Pathway.'); })
+      .catch(function (e) { $('lerr').textContent = e.message; }).then(function () { $('mvbtn').disabled = false; $('mvbtn').textContent = 'Move our data'; });
+  };
   $('fbtn').onclick = function () {
     var code = $('fcode').value.trim(), name = $('fname').value.trim(), pin = $('fpin').value.trim();
     if (!code || !name || !/^\d{4}$/.test(pin)) { $('lerr').textContent = 'Enter the setup code, your name and a 4-digit PIN'; return; }
