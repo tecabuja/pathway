@@ -183,5 +183,6 @@
       };
     }).catch(function (e) { if (!gone()) { OPEN = null; T.fail(v, e); } });
   }
+  P.startGrid = function (tpl) { lookups().then(function () { startNew(tpl); }).catch(function (e) { P.toast(e.message); }); };
   P.openService = function (id) { OPEN = id; ED = null; P.app.go('grid'); };
 })();

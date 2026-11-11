@@ -29,6 +29,13 @@
     <div class="err" id="lerr"></div>
     <button class="btn" id="lbtn" style="width:100%;padding:12px" type="submit">Sign in</button>
     <div class="small muted" style="text-align:center;margin-top:12px">Forgot your PIN? Ask your church admin to set a new one.</div>
+    <div id="firstSet" hidden style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+      <b>First-time setup</b><div class="small muted">Pathway has no admin yet. Use the one-time setup code shown when Pathway was installed.</div>
+      <input class="inp" id="fcode" placeholder="Setup code" inputmode="numeric" autocomplete="off" style="margin-top:8px">
+      <input class="inp" id="fname" placeholder="Your full name" autocomplete="name" style="margin-top:8px">
+      <input class="inp" id="fpin" placeholder="Choose a 4-digit PIN" inputmode="numeric" maxlength="4" type="password" autocomplete="off" style="margin-top:8px">
+      <button class="btn" type="button" id="fbtn" style="width:100%;margin-top:10px">Create the first admin</button>
+    </div>
   </form>
 </div>
 
@@ -58,6 +65,7 @@
 <script src="tracker.js"></script>
 <script src="church.js"></script>
 <script src="grid.js"></script>
+<script src="admin.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

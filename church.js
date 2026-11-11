@@ -46,7 +46,8 @@
       var maxD = Math.max.apply(null, d.stageDays.map(function (x) { return x.days || 0; }).concat([30]));
       var maxC = Math.max.apply(null, d.campusSplit.map(function (x) { return x.count; }).concat([1]));
       var f = d.funnel;
-      v.innerHTML = (d.campuses.length ? '<div class="tools"><select class="inp" id="dcamp"><option value="">All campuses</option>' + T.opts(d.campuses, DC) + '</select><span class="sp" style="flex:1"></span><button class="btn ghost sm" data-reload="1">Refresh</button></div>' : '') +
+      v.innerHTML = (d.campuses.length ? '<div class="tools noprint"><select class="inp" id="dcamp"><option value="">All campuses</option>' + T.opts(d.campuses, DC) + '</select><span class="sp" style="flex:1"></span><button class="btn ghost sm" data-reload="1">Refresh</button><button class="btn sm" onclick="window.print()">Print report</button></div>' : '<div class="tools noprint"><span class="sp" style="flex:1"></span><button class="btn sm" onclick="window.print()">Print report</button></div>') +
+        '<div class="printonly"><h2 style="margin:0">' + esc(P.config().church || 'The Elevation Church') + ' · Pathway report</h2><p class="small">' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + (d.campus ? ' · ' + esc(d.campus) : ' · all campuses') + '</p></div>' +
         '<div class="sec" style="margin:0 0 10px">Whole church' + (d.campus ? ' · ' + esc(d.campus) : '') + '</div><div class="grid g4" style="margin-bottom:22px">' +
         '<div class="card kpi click" data-go="members"><div class="l">Members</div><div class="n">' + c.members + '</div><div class="d">' + c.groups + ' small group' + (c.groups === 1 ? '' : 's') + '</div></div>' +
         '<div class="card kpi click" data-go="stewards"><div class="l">Stewards serving</div><div class="n">' + c.stewards + '</div><div class="d">' + c.departments + ' departments</div></div>' +
@@ -182,7 +183,7 @@
       var u = T.user(), me = d.me, g = d.group, lv = me ? (LEVEL[me.role] || 1) : 0, h = new Date().getHours();
       P.badges.unread = 0; P.app.nav();
       v.innerHTML = '<div class="banner">' + (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + ', <b>' + esc(u.name.split(' ')[0]) + '</b>. ' +
-        (d.notes.filter(function (n) { return !n.read; }).length ? 'You have new messages below.' : 'Here is everything for you in one place.') + '</div>' +
+        (d.notes.filter(function (n) { return !n.read; }).length ? 'You have new messages below.' : 'Here is everything for you in one place.') + '<span class="sp" style="flex:1"></span><button class="btn ghost sm" data-chpin="1">Change my PIN</button></div>' +
         '<div class="grid g3"><div class="card"><h3>My small group</h3>' + (g ? '<b>' + esc(g.name) + '</b><div class="small muted">' + esc(g.day || '') + (g.leader ? ' · leader ' + esc(g.leader) : '') + (g.area ? ' · ' + esc(g.area) : '') + '</div><div class="small" style="margin-top:8px">Last meeting: ' + (g.last ? MON(g.last.date) + (g.last.notes ? ' – ' + esc(g.last.notes) : '') : 'no report yet') + '</div>' : '<div class="small muted">' + (me ? 'Not in a small group yet. Ask a leader to add you.' : 'Your name is not in the Members directory yet.') + '</div>') + '</div>' +
         '<div class="card"><h3>My service</h3><b>' + esc((me && me.dept) || 'Not serving yet') + '</b>' + (d.duties.length ? d.duties.map(function (x) {
           return '<div class="row"><div class="meta"><b>' + MON(x.sunday) + '</b><span>' + esc(x.dept) + '</span></div>' + (x.status === 'Scheduled' ? '<button class="btn sm" data-duty="Confirmed" data-sun="' + esc(x.sunday) + '" data-dept="' + esc(x.dept) + '">Confirm</button><button class="btn ghost sm" data-duty="Can\'t make it" data-sun="' + esc(x.sunday) + '" data-dept="' + esc(x.dept) + '">Can\'t make it</button>' : dutyTag(x.status)) + '</div>';
@@ -242,26 +243,5 @@
   };
   function nextSun(d) { var x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() + ((7 - x.getDay()) % 7)); return x; }
 
-  // ---------- Admin & settings ----------
-  P.views.admin = { title: 'Admin & settings', icon: I.set, render: function (v) {
-    T.loading(v); var gone = T.guard();
-    get('admin', 'adminInfo', null, true).then(function (d) {
-      if (gone()) return;
-      v.innerHTML = (d.automation ? '' : '<div class="banner red">⏰ Daily reminders and the automatic rota are <b>off</b>. In the church Sheet, click <b>Pathway &gt; Turn on daily reminders &amp; rota</b> (once).</div>') +
-        '<div class="grid g4" style="margin-bottom:16px">' + [['People', 'Converts captured'], ['Members', 'Members'], ['Requests', 'Requests'], ['Away', 'Trips logged']].map(function (x) { return '<div class="card kpi"><div class="l">' + x[1] + '</div><div class="n">' + (d.counts[x[0]] || 0) + '</div></div>'; }).join('') + '</div>' +
-        '<div class="grid g2" style="align-items:start"><div style="display:grid;gap:16px">' +
-        '<div class="card"><h3>The church Sheet</h3><p class="small" style="margin-top:-4px">All settings live in the Sheet: workers and PINs, campuses, stages, events, groups, departments, approval routes and rules. Change them there; the app follows. Nothing needs code.</p>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" href="' + esc(d.sheetUrl) + '" target="_blank" rel="noopener">Open the church Sheet</a><a class="btn ghost sm" href="guide.html" target="_blank" rel="noopener">Admin guide (one page)</a></div></div>' +
-        '<div class="card tablecard"><h3 style="padding-top:10px">Workers & roles</h3><table><thead><tr><th>Name</th><th>Role</th><th class="hm">Campus</th><th class="hm">Last sign-in</th><th>Sign-in</th></tr></thead><tbody>' +
-        d.workers.map(function (w) {
-          return '<tr><td><b>' + esc(w.name) + '</b>' + (w.email ? ' <span class="small muted">✉</span>' : '') + '</td><td>' + esc(w.role) + '</td><td class="hm">' + esc(w.campus || 'All') + '</td><td class="hm">' + (w.last ? T.fmt(w.last) : '—') + '</td><td>' +
-            (!w.active ? '<span class="tag grey">Inactive</span>' : w.locked ? '<span class="tag red">Locked</span>' : !w.pin ? '<span class="tag amber">No PIN</span>' : '<span class="tag green">OK</span>') + '</td></tr>';
-        }).join('') + '</tbody></table><div class="small muted" style="margin:10px 0">Locked or forgotten PIN: type a new 4-digit PIN in the Workers tab, then Pathway &gt; Apply new PINs.</div></div>' +
-        '<div class="card"><h3>Approval routes</h3>' + d.routes.map(function (r) { return '<div class="small" style="margin:6px 0"><b>' + esc(r.type) + '</b>: <span class="muted">' + r.steps.map(esc).join(' → ') + '</span></div>'; }).join('') + '</div>' +
-        '<div class="card"><h3>Pathway stages</h3>' + d.stages.map(function (s) { return '<div class="small" style="margin:6px 0"><span class="tag">' + s.n + '</span> <b>' + esc(s.name) + '</b> <span class="muted">· next step: ' + esc(s.next || '—') + '</span></div>'; }).join('') + '</div></div>' +
-        '<div style="display:grid;gap:16px;align-content:start"><div class="card"><h3>Rules</h3>' + d.settings.map(function (s) { return '<div class="small" style="margin:8px 0"><b>' + esc(s.name) + ':</b> ' + esc(s.value) + '<div class="muted">' + esc(s.help) + '</div></div>'; }).join('') + '</div>' +
-        '<div class="card"><h3>Backup & data protection</h3><p class="small" style="margin-top:-4px">Backup: once a month, in the church Sheet click <b>File &gt; Download &gt; Microsoft Excel</b> and keep the file in the church\'s safe storage.<br>Deletion request: open the person in Converts and use <b>Delete personal details</b> at the bottom of their profile. It is recorded in the audit trail.</p></div>' +
-        '<div class="card"><h3>Audit trail</h3><div class="log">' + d.audit.map(function (a) { return '<div class="e"><b>' + esc(a.action) + '</b> · ' + esc(a.user) + '<div class="small muted">' + esc(a.details) + ' · ' + T.fmt(a.time) + '</div></div>'; }).join('') + '</div></div></div></div>';
-    }).catch(function (e) { if (!gone()) T.fail(v, e); });
-  } };
+  // Admin & settings now lives in admin.js (step 5).
 })();

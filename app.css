@@ -84,6 +84,7 @@ main{min-width:0}
 /* ---------- step 2: tracker, members, groups, stewards ---------- */
 .g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
 .card h3 .sp{flex:1}
+.card h3 .btn{white-space:nowrap;flex:none}
 .kpi .n{font-size:28px;font-weight:800;letter-spacing:-.02em}
 .kpi .l{color:var(--muted);font-size:12px}
 .kpi .d{font-size:12px;font-weight:600;color:var(--green)}.kpi .d.bad{color:var(--red)}
@@ -143,6 +144,7 @@ body.locked{overflow:hidden}
 .mini .inp{padding:7px 10px;width:auto;flex:1;min-width:130px}
 .mini select.inp{flex:0 1 auto;min-width:110px}
 .hide-d{display:none}
+.printonly{display:none}
 /* service grid */
 .gi{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#FDFCFA}
 .gi-top{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
@@ -171,7 +173,7 @@ a.btn{text-decoration:none}
  .tools .inp{flex:1 1 100%}
  .hide-d{display:block}
 }
-@media print{aside,.top,.mnav,.noprint,.ov,.drawer,.toast,.gbar{display:none!important}.gdoc{border:0;box-shadow:none;padding:0}.gtable{min-width:0;font-size:10.5px}.gtable .hm{display:table-cell!important}.gdoc .hide-d{display:none!important}tr.gmine td{background:none}.app{display:block}.wrap{padding:0}.card{box-shadow:none;border:0}}
+@media print{.printonly{display:block!important;margin-bottom:12px}.card.click{cursor:auto}.grid.g4{grid-template-columns:repeat(4,1fr)!important}.grid.g2,.grid.g3{grid-template-columns:1fr 1fr!important}.card{break-inside:avoid}aside,.top,.mnav,.noprint,.ov,.drawer,.toast,.gbar{display:none!important}.gdoc{border:0;box-shadow:none;padding:0}.gtable{min-width:0;font-size:10.5px}.gtable .hm{display:table-cell!important}.gdoc .hide-d{display:none!important}tr.gmine td{background:none}.app{display:block}.wrap{padding:0}.card{box-shadow:none;border:0}}
 @media(max-width:1000px){.g2{grid-template-columns:1fr}}
 @media(max-width:760px){
  .app{grid-template-columns:1fr}aside{display:none}

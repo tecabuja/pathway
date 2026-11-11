@@ -13,7 +13,7 @@
   P.views = P.views || {};
   var NAV = { capture: ['Capture convert', I.add], qr: ['QR codes', I.qr], queue: ['Saved on this phone', I.sync] };
   var STAFF_NAV = ['dash', 'tasks', 'people', 'path', 'capture', 'qr', 'queue', 'members', 'groups', 'stewards', 'grid', 'requests', 'away', 'home'];
-  var BY_ROLE = { 'Admin': STAFF_NAV.concat(['admin']), 'Leader': STAFF_NAV, 'Follow-up worker': ['tasks', 'people', 'capture', 'queue', 'home', 'grid', 'requests', 'away'],
+  var BY_ROLE = { 'Admin': STAFF_NAV.concat(['admin']), 'Leader': STAFF_NAV.concat(['admin']), 'Follow-up worker': ['tasks', 'people', 'capture', 'queue', 'home', 'grid', 'requests', 'away'],
     'Counsellor': ['capture', 'qr', 'queue', 'home', 'grid', 'requests', 'away'], 'Member': ['home', 'grid', 'requests', 'away'] };
   var SECT = { dash: 'Overview', members: 'Church', groups: 'Church', stewards: 'Church', grid: 'Church', requests: 'Church', away: 'Church', home: 'Church', admin: 'System' };
   var SHORT = { dash: 'Dashboard', tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards', grid: 'Grids', requests: 'Requests', away: 'Away', home: 'My space', admin: 'Admin' };
@@ -27,7 +27,19 @@
     $('ln').value = P.get('lastName', '');
     pinBoxes().forEach(function (b) { b.value = ''; });
     setTimeout(function () { ($('ln').value ? pinBoxes()[0] : $('ln')).focus(); }, 50);
+    $('firstSet').hidden = true;
+    if (P.API && P.online()) P.call('config').then(function (c) { $('firstSet').hidden = !c.needsSetup; }).catch(function () {});
   }
+  $('fbtn').onclick = function () {
+    var code = $('fcode').value.trim(), name = $('fname').value.trim(), pin = $('fpin').value.trim();
+    if (!code || !name || !/^\d{4}$/.test(pin)) { $('lerr').textContent = 'Enter the setup code, your name and a 4-digit PIN'; return; }
+    $('fbtn').disabled = true;
+    P.call('firstAdmin', { code: code, name: name, pin: pin }).then(function (j) {
+      P.set('token', j.token); P.set('user', j.user); P.set('lastName', name); USER = j.user;
+      return P.refreshConfig();
+    }).then(function () { start(); P.app.go('admin'); P.toast('Welcome! You are the first admin. Start by adding your workers.'); })
+      .catch(function (e) { $('lerr').textContent = e.message; }).then(function () { $('fbtn').disabled = false; });
+  };
   function pinBoxes() { return [].slice.call($('pin').querySelectorAll('input')); }
   pinBoxes().forEach(function (b, i, all) {
     b.addEventListener('input', function () { b.value = b.value.replace(/\D/g, '').slice(-1); if (b.value && all[i + 1]) all[i + 1].focus(); if (i === 3 && b.value) $('loginForm').requestSubmit ? $('loginForm').requestSubmit() : doLogin(); });

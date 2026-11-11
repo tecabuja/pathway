@@ -233,7 +233,7 @@
     h += '</div>';
     // details
     var ms = L.milestones || ['Water baptism', 'Serving team'];
-    h += '<div class="card"><h3>Details</h3><div class="kv">' +
+    h += '<div class="card"><h3>Details<span class="sp"></span>' + (!p.offline && (canP || p.owner === user().name) ? '<button class="btn ghost sm" id="pedit">Edit details</button>' : '') + '</h3><div class="kv">' +
       '<div><span class="k">Phone</span>' + esc(p.phone) + (p.wa ? ' <span class="tag green">WhatsApp</span>' : '') + '</div><div><span class="k">Email</span>' + esc(p.email || '—') + '</div>' +
       '<div><span class="k">Gender · Age</span>' + esc(p.gender || '—') + ' · ' + esc(p.age || '—') + '</div><div><span class="k">Campus · Area</span>' + esc(p.campus || '—') + ' · ' + esc(p.area || '—') + '</div>' +
       '<div><span class="k">Language · Prefers</span>' + esc(p.lang || '—') + ' · ' + esc(p.contact || '—') + '</div><div><span class="k">Captured by</span>' + esc(p.capturedBy || '—') + '</div>' +
@@ -266,6 +266,7 @@
       var c = e.target.closest('.chip'); if (!c) return; c.classList.toggle('on');
       upd({ milestones: [].map.call(this.querySelectorAll('.chip.on'), function (x) { return x.textContent; }) }, 'Milestones saved ✓');
     };
+    if ($('pedit')) $('pedit').onclick = function () { editPerson(p); };
     if ($('pdel')) $('pdel').onclick = function () {
       if (!window.confirm('Permanently remove ' + nm(p) + '\'s personal details? This cannot be undone.')) return;
       api('deletePersonData', { id: p.id }).then(function () { P.toast('Personal details removed'); stale('people', 'members'); S._dirty = true; P.closeDrawer(); }).catch(function (e) { P.toast(e.message); });
@@ -275,6 +276,32 @@
       api('logFollowUp', { id: p.id, type: $('lt').value, outcome: $('lo').value.trim(), next: $('ln2').value.trim(), nextDate: $('ld').value }).then(function () {
         P.toast('Follow-up logged ✓'); re();
       }).catch(function (e) { busy(b, false); P.toast(e.message); });
+    };
+  }
+
+  function editPerson(p) {
+    var num = String(p.phone).split(' ').pop(), cc = p.cc || String(p.phone).split(' ')[0] || '+234';
+    var sel = function (id, list, cur, blank) { return '<select class="inp" id="' + id + '">' + opts(list, cur, blank) + '</select>'; };
+    openDrawer(dhead('Edit details', esc(nm(p)) + ' · ' + esc(p.id)) + '<div class="db"><div class="card"><div class="form">' +
+      '<div class="f"><label for="e1">First name *</label><input class="inp" id="e1" value="' + esc(p.first) + '"></div><div class="f"><label for="e2">Last name</label><input class="inp" id="e2" value="' + esc(p.last) + '"></div>' +
+      '<div class="f"><label for="e3">Phone *</label><div class="phone">' + sel('ecc', P.COUNTRIES.map(function (c) { return { v: c[1], l: c[2] + ' ' + c[1] }; }), cc) + '<input class="inp" id="e3" inputmode="tel" value="' + esc(num) + '"></div>' +
+      '<label class="small" style="font-weight:500;margin-top:6px"><input type="checkbox" id="ewa"' + (p.wa ? ' checked' : '') + '> On WhatsApp</label></div>' +
+      '<div class="f"><label for="e4">Email</label><input class="inp" id="e4" value="' + esc(p.email) + '"></div>' +
+      '<div class="f"><label for="e5">Gender</label>' + sel('e5', ['Female', 'Male'], p.gender, '—') + '</div><div class="f"><label for="e6">Age range</label>' + sel('e6', ['Under 13', '13–17', '18–24', '25–34', '35–44', '45+'], p.age, '—') + '</div>' +
+      '<div class="f"><label for="e7">Area</label><input class="inp" id="e7" value="' + esc(p.area) + '"></div><div class="f"><label for="e8">Language</label>' + sel('e8', P.LANGS, p.lang, '—') + '</div>' +
+      '<div class="f"><label for="e9">Preferred contact</label>' + sel('e9', ['WhatsApp', 'Call', 'SMS', 'Email', 'Visit'], p.contact, '—') + '</div>' +
+      (pastoral() ? '<div class="f"><label for="e10">Campus</label>' + sel('e10', (S.lookups && S.lookups.campuses) || [], p.campus, '—') + '</div>' : '') +
+      '<div class="f full"><label>Care needs</label><div class="chips" id="eneeds">' + P.NEEDS.filter(function (n) { return n !== 'None'; }).map(function (n) { return '<span class="chip' + ((p.needs || []).indexOf(n) >= 0 ? ' on' : '') + '" role="button" tabindex="0">' + esc(n) + '</span>'; }).join('') + '</div></div>' +
+      '<div class="full" style="display:flex;justify-content:flex-end"><button class="btn" id="esave">Save</button></div></div></div></div>');
+    $('eneeds').onclick = function (e) { var c = e.target.closest('.chip'); if (c) c.classList.toggle('on'); };
+    $('esave').onclick = function () {
+      var b = this, d = { first: $('e1').value.trim(), last: $('e2').value.trim(), cc: $('ecc').value, phone: $('e3').value.trim(), whatsapp: $('ewa').checked, email: $('e4').value.trim(),
+        gender: $('e5').value, age: $('e6').value, area: $('e7').value.trim(), lang: $('e8').value, contact: $('e9').value,
+        needs: [].map.call(document.querySelectorAll('#eneeds .chip.on'), function (x) { return x.textContent; }) };
+      if (!d.first) { P.toast('First name is required'); return; }
+      var ch = { details: d }; if ($('e10')) ch.campus = $('e10').value;
+      busy(b, true);
+      api('updatePerson', { id: p.id, changes: ch }).then(function () { P.toast('Details saved ✓'); stale('people'); S._dirty = true; openPerson(p.id); }).catch(function (e) { busy(b, false); P.toast(e.message); });
     };
   }
 
@@ -305,12 +332,13 @@
       var roles = ['All'].concat(S.lookups.memberRoles || ['Member', 'Steward', 'Group leader', 'Department head']);
       v.innerHTML = '<div class="tools"><input class="inp" id="mq" style="flex:1;min-width:180px" placeholder="Search name, area, group, department…" value="' + esc(MF.q) + '">' +
         '<div class="seg" id="mseg">' + roles.map(function (r) { return '<button class="' + (MF.role === r ? 'on' : '') + '" data-r="' + esc(r) + '">' + (r === 'All' ? 'All' : esc(r) + 's') + '</button>'; }).join('') + '</div>' +
-        '<button class="btn ghost sm" id="mbday">🎂 ' + (MF.bday ? 'Showing ' : '') + MONTHS[new Date().getMonth()] + ' birthdays</button><button class="btn ghost sm" id="mexp">Export</button></div>' +
+        '<button class="btn ghost sm" id="mbday">🎂 ' + (MF.bday ? 'Showing ' : '') + MONTHS[new Date().getMonth()] + ' birthdays</button><button class="btn ghost sm" id="mexp">Export</button><button class="btn sm" id="madd">+ Add member</button></div>' +
         '<div class="card tablecard" id="mtable"></div><div class="small muted" style="margin-top:8px"><span id="mcount"></span> · converts who complete Membership Class join this directory automatically</div>';
       drawMembers();
       $('mq').oninput = function () { MF.q = this.value; drawMembers(); };
       $('mseg').onclick = function (e) { var b = e.target.closest('[data-r]'); if (!b) return; MF.role = b.dataset.r; [].forEach.call(this.children, function (x) { x.classList.toggle('on', x === b); }); drawMembers(); };
       $('mbday').onclick = function () { MF.bday = !MF.bday; P.app.render(); };
+      $('madd').onclick = function () { openMember(''); };
       $('mexp').onclick = function () {
         csv('Pathway members', [['Name', 'Phone', 'Role', 'Small group', 'Department', 'Campus', 'Area', 'Birthday month', 'Member since', 'Steward training']].concat(memberRows().map(function (m) {
           return [m.name, m.phone, m.role, m.group, m.dept, m.campus, m.area, m.bmonth, fmt(m.joined), m.training];
@@ -323,28 +351,37 @@
     return all.filter(function (m) { return m.key === key; })[0];
   }
   function openMember(key) {
-    var m = findMember(key), L = S.lookups || {}; if (!m) return;
+    var isNew = !key, m = isNew ? { name: '', role: 'Member', campus: user().campus || '' } : findMember(key), L = S.lookups || {}; if (!m) return;
     var lv = { 'Member': 1, 'Steward': 3, 'Group leader': 4, 'Department head': 4 }[m.role] || 1;
-    var h = dhead(m.name, esc(m.role) + (m.campus ? ' · ' + esc(m.campus) : '') + (m.joined ? ' · member since ' + fmt(m.joined) : ''),
+    var h = isNew ? dhead('Add a member', 'For existing members who did not come through the convert form') + '<div class="db">' : dhead(m.name, esc(m.role) + (m.campus ? ' · ' + esc(m.campus) : '') + (m.joined ? ' · member since ' + fmt(m.joined) : ''),
       m.phone ? '<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap"><a class="btn gold sm" href="tel:+' + digits(m.phone) + '">' + I.phone + ' Call</a><a class="btn sm wa" href="https://wa.me/' + digits(m.phone) + '" target="_blank" rel="noopener">' + I.wa + ' WhatsApp</a></div>' : '') + '<div class="db">';
-    h += '<div class="card"><h3>Growth track</h3><div class="tl">' + ['Membership', 'TECI', 'Serving', 'Leadership'].map(function (s, i) {
+    if (!isNew) h += '<div class="card"><h3>Growth track</h3><div class="tl">' + ['Membership', 'TECI', 'Serving', 'Leadership'].map(function (s, i) {
       return '<div class="s ' + (i < lv - 1 ? 'done' : i === lv - 1 ? 'cur' : '') + '"><i>' + (i < lv - 1 ? '✓' : i + 1) + '</i>' + s + '</div>';
     }).join('') + '</div></div>';
     h += '<div class="card"><h3>Profile</h3><div class="form">' +
+      '<div class="f"><label for="mname">Full name *</label><input class="inp" id="mname" value="' + esc(m.name) + '"></div>' +
+      '<div class="f"><label for="mphone">Phone</label><input class="inp" id="mphone" inputmode="tel" value="' + esc(m.phone || '') + '"></div>' +
+      '<div class="f"><label for="mcamp">Campus</label><select class="inp" id="mcamp">' + opts(L.campuses || [], m.campus, '—') + '</select></div>' +
+      '<div class="f"><label for="marea">Area</label><input class="inp" id="marea" value="' + esc(m.area || '') + '"></div>' +
       '<div class="f"><label for="mrole">Role</label><select class="inp" id="mrole">' + opts(L.memberRoles || ['Member'], m.role) + '</select></div>' +
       '<div class="f"><label for="mgroup">Small group</label><select class="inp" id="mgroup">' + opts((L.groups || []).map(function (g) { return g.name; }), m.group, 'Not in a group') + '</select></div>' +
       '<div class="f"><label for="mdept">Department (serving)</label><select class="inp" id="mdept">' + opts((L.departments || []).map(function (d) { return d.name; }), m.dept, 'Not serving yet') + '</select></div>' +
       '<div class="f"><label for="mtrain">Steward training</label><select class="inp" id="mtrain">' + opts(L.training || ['Not started', 'In progress', 'Completed'], m.training, '—') + '</select></div>' +
       '<div class="f"><label for="mbm">Birthday month</label><select class="inp" id="mbm">' + opts(MONTHS, m.bmonth, '—') + '</select></div>' +
-      '<div class="f"><label>Phone · Area</label><div style="padding:9px 0">' + esc(m.phone || '—') + ' · ' + esc(m.area || '—') + '</div></div>' +
-      '<div class="full" style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">' + (m.personId ? '<button class="btn ghost" data-person="' + esc(m.personId) + '">Open convert journey</button>' : '') + '<button class="btn" id="msave">Save changes</button></div></div>' +
-      '<div class="small muted" style="margin-top:10px">Choosing a department makes a Member a Steward automatically. Away log and requests arrive in the next update.</div></div></div>';
+      '<div class="full" style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">' + (isNew ? '' : '<button class="btn ghost" id="mrm" style="color:var(--red)">Remove from directory</button><span class="sp" style="flex:1"></span>') + (m.personId ? '<button class="btn ghost" data-person="' + esc(m.personId) + '">Open convert journey</button>' : '') + '<button class="btn" id="msave">' + (isNew ? 'Add member' : 'Save changes') + '</button></div></div>' +
+      '<div class="small muted" style="margin-top:10px">Choosing a department makes a Member a Steward automatically. To let a member sign in, add them as a worker with role Member in Admin & settings.</div></div></div>';
     openDrawer(h);
     $('msave').onclick = function () {
       var b = this; busy(b, true);
-      api('updateMember', { key: m.key, changes: { role: $('mrole').value, group: $('mgroup').value, dept: $('mdept').value, training: $('mtrain').value, bmonth: $('mbm').value } }).then(function () {
-        P.toast('Saved ✓'); stale('members', 'stewards', 'groups'); S._dirty = true; P.closeDrawer();
+      var vals = { name: $('mname').value.trim(), phone: $('mphone').value.trim(), campus: $('mcamp').value, area: $('marea').value.trim(), role: $('mrole').value, group: $('mgroup').value, dept: $('mdept').value, training: $('mtrain').value, bmonth: $('mbm').value };
+      if (!vals.name) { busy(b, false); P.toast('Enter the name'); return; }
+      (isNew ? api('createMember', { member: vals }) : api('updateMember', { key: m.key, changes: vals })).then(function () {
+        P.toast(isNew ? 'Member added ✓' : 'Saved ✓'); stale('members', 'stewards', 'groups'); S._dirty = true; P.closeDrawer();
       }).catch(function (e) { busy(b, false); P.toast(e.message); });
+    };
+    if ($('mrm')) $('mrm').onclick = function () {
+      if (!window.confirm('Remove ' + m.name + ' from the Members directory? Their history is kept.')) return;
+      api('updateMember', { key: m.key, changes: { active: 'No' } }).then(function () { P.toast('Removed'); stale('members', 'stewards', 'groups'); S._dirty = true; P.closeDrawer(); }).catch(function (e) { P.toast(e.message); });
     };
   }
 

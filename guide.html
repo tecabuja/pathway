@@ -15,52 +15,51 @@ ol,ul{margin:0;padding-left:18px}li{margin:2px 0}b{font-weight:700}.tab{backgrou
 .warn{border-left:4px solid var(--gold)}.muted{color:var(--muted)}
 @media print{body{background:#fff;font-size:10.5px}.page{padding:0}.box{border-color:#ddd;padding:8px 12px;margin-bottom:8px}header{padding:10px 14px;margin-bottom:10px}@page{margin:10mm}}
 </style></head><body><div class="page">
-<header><img src="img/logo-full.png" alt=""><div><h1>Pathway: admin guide (one page)</h1><p>For church admins and volunteers. All day-to-day settings are changed in the <b>church Google Sheet</b>, not in code.</p></div></header>
+<header><img src="img/logo-full.png" alt=""><div><h1>Pathway: admin guide (one page)</h1><p>For church admins and leaders. Everything is done <b>in the Pathway app</b>. Nobody needs to open the Google Sheet.</p></div></header>
 <div class="cols">
 <div class="box"><h2>Who does what</h2><ul>
-<li><b>Admin</b>: sees the whole church, dashboard and admin page.</li>
-<li><b>Leader</b>: their campus; approves requests, builds the rota.</li>
+<li><b>Admin</b>: the whole church, and everything in <span class="tab">Admin &amp; settings</span>.</li>
+<li><b>Leader</b>: their campus. Adds follow-up workers, counsellors and members; manages events, small groups and departments; approves requests and builds the rota.</li>
 <li><b>Follow-up worker</b>: only the new converts given to them.</li>
 <li><b>Counsellor</b>: captures new converts and shows QR codes.</li>
-<li><b>Member</b>: My space, requests and trips.</li></ul></div>
-<div class="box"><h2>Add a person who signs in</h2><ol>
-<li>Open the Sheet, tab <span class="tab">Workers</span>. Add a row: name, role, campus, Active = Yes.</li>
-<li>Type a 4-digit PIN in the <b>New PIN</b> column.</li>
-<li>Click <b>Pathway &gt; Apply new PINs</b>. The PIN is hidden and saved.</li>
-<li>Tell them their name (exactly as typed) and PIN privately.</li>
-<li>Optional: add their email so they get reminders by email.</li></ol></div>
+<li><b>Member</b>: My space, service grids, requests and trips.</li>
+<li><b>Service grid builders</b>: Admins, plus anyone with "Can build service grids" = Yes.</li></ul></div>
+<div class="box"><h2>Let someone sign in</h2><ol>
+<li>Go to <span class="tab">Admin &amp; settings</span> &gt; <span class="tab">Workers &amp; PINs</span> &gt; <b>+ Add</b>.</li>
+<li>Type their name exactly as people know them, then choose a role and campus.</li>
+<li>Give a 4-digit PIN, then <b>Save</b>.</li>
+<li>Tell them their name and PIN privately. They can change the PIN in <span class="tab">My space</span>.</li></ol></div>
 <div class="box"><h2>Forgotten PIN, locked out, or leaving</h2><ul>
-<li><b>Forgotten / locked</b>: type a new PIN in <span class="tab">Workers</span>, then Pathway &gt; Apply new PINs.</li>
-<li><b>Leaving</b>: set Active to <b>No</b>. They are signed out everywhere.</li>
-<li>Members who only use My space still need a row in <span class="tab">Workers</span> with role <b>Member</b>.</li></ul></div>
-<div class="box"><h2>Change church settings</h2><ul>
-<li><span class="tab">Campuses</span>, <span class="tab">Events</span> (each event gets its own QR code), <span class="tab">Groups</span>, <span class="tab">Departments</span>: add a row, Active = Yes. To retire one, set Active = No.</li>
-<li><span class="tab">Stages</span>: rename a stage or edit its "next step" hint.</li>
-<li><span class="tab">Settings</span>: contact deadline, stall days, assignment rule, rota day, email on/off.</li>
-<li><span class="tab">Approval Routes</span>: who approves each request type, in order (up to 4 steps).</li>
-<li><span class="tab">Approvers</span>: who "Senior pastor", "Finance" and similar titles are. Blank means any Admin.</li>
-<li><b>Service grids</b>: in <span class="tab">Workers</span>, type <b>Yes</b> under "Can build service grids" for each coordinator (Admins can always build). Edit starter running orders in <span class="tab">Grid Templates</span>.</li>
-<li>After a change, tap <b>Refresh</b> in the app, or close and reopen it.</li></ul></div>
+<li><b>Forgotten or locked</b>: open the worker and type a new PIN. This also unlocks them.</li>
+<li><b>Leaving</b>: open the worker and tap <b>Remove</b>. They are signed out everywhere and their history is kept. To bring them back, set Active to Yes.</li>
+<li>Renaming someone updates them everywhere: groups, departments, approvals and service grids. Give them a new PIN after a rename.</li></ul></div>
+<div class="box"><h2>Change church set-up</h2><ul>
+<li><span class="tab">Campuses</span>, <span class="tab">Events &amp; QR</span>, <span class="tab">Small groups</span>, <span class="tab">Departments</span>: tap <b>+ Add</b>, or tap a row to edit or remove it. Renames carry through everywhere.</li>
+<li><span class="tab">Pathway stages</span>: rename stages and edit the "next step" hint.</li>
+<li><span class="tab">Approvals</span>: who approves each request type, in order, and who titles like "Senior pastor" are.</li>
+<li><span class="tab">Rules</span>: contact deadline, stall days, assignment rule, rota day, emails, reminder time, venue and more.</li>
+<li><span class="tab">Members</span> screen: <b>+ Add member</b>, edit, or remove from the directory.</li>
+<li>Convert profile: <b>Edit details</b> fixes a name, phone or other details.</li></ul></div>
 <div class="box warn"><h2>Golden rules</h2><ul>
-<li>Never rename or delete a <b>tab</b> or a <b>column heading</b>. Add rows only.</li>
-<li>Names must match <b>exactly</b> everywhere. The leader of a group and the head of a department must be spelt as in <span class="tab">Workers</span>, or they will not get approvals.</li>
-<li>Do not edit the <span class="tab">Audit</span> tab, or the hidden PIN and session columns.</li>
-<li>Prayer notes are for the pastoral team only. Never share PINs.</li></ul></div>
+<li>Never share PINs. Each person has their own.</li>
+<li>Prayer notes are for the pastoral team only.</li>
+<li>Remove people who leave a role the same week.</li>
+<li>Keep at least two admins who can sign in.</li></ul></div>
 <div class="box"><h2>Every week</h2><ul>
-<li><b>Dashboard</b>: check "Stalled / unassigned". Give new converts a follow-up worker.</li>
+<li><b>Dashboard</b>: check "Stalled / unassigned" and give new converts a follow-up worker.</li>
 <li><b>Permissions</b>: clear anything waiting for you.</li>
 <li><b>Stewards</b>: check the Sunday rota on Thursday or Friday and fill any red gaps.</li>
-<li>Remind group leaders to log their weekly meeting.</li></ul></div>
+<li><b>Service grids</b>: publish by midweek and check who has confirmed.</li></ul></div>
 <div class="box"><h2>Every month</h2><ul>
-<li><b>Backup</b>: in the Sheet, File &gt; Download &gt; Microsoft Excel. Keep the file safely.</li>
-<li>Review stalled people with the follow-up team.</li>
-<li><b>Deletion requests</b>: open the person in Converts, then use <b>Delete personal details</b> at the bottom of their profile (Admin only).</li></ul></div>
-<div class="box"><h2>One-time switches</h2><ul>
-<li><b>Pathway &gt; Turn on daily reminders &amp; rota</b>: morning follow-up reminders, automatic Sunday rota, trips closed when people return.</li>
-<li><b>Pathway &gt; Build rota for next Sunday</b>: build the rota by hand at any time.</li></ul></div>
+<li><span class="tab">Export &amp; backup</span> &gt; <b>Download full backup (Excel)</b>. Keep the file safely.</li>
+<li><b>Dashboard</b> &gt; <b>Print report</b> for the pastorate meeting.</li>
+<li>Deletion requests: open the convert and use <b>Delete personal details</b> (Admin only).</li></ul></div>
+<div class="box"><h2>Switches</h2><ul>
+<li><span class="tab">Overview</span> &gt; <b>Daily reminders &amp; automatic rota</b>: turn on or off.</li>
+<li><span class="tab">Overview</span> &gt; <b>Check &amp; repair</b>: if something looks wrong after an update. It never deletes data.</li>
+<li><span class="tab">Audit trail</span>: see who changed what, and when.</li></ul></div>
 <div class="box"><h2>If something goes wrong</h2><ul>
-<li>Strange error, or a column missing: click <b>Pathway &gt; Set up / repair tabs</b>. It never deletes data.</li>
-<li>"Not connected to the church Sheet": the web address in <b>config.js</b> is missing or wrong. Ask the person who set up Pathway.</li>
+<li>"Not connected to the church Sheet": the app's web address setting is missing. Ask the person who installed Pathway.</li>
 <li>New screens not showing: close the app fully and open it again.</li>
 <li>Phone offline: captures are saved on the phone and send by themselves later.</li></ul></div>
 </div>
