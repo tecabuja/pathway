@@ -12,10 +12,11 @@
   };
   P.views = P.views || {};
   var NAV = { capture: ['Capture convert', I.add], qr: ['QR codes', I.qr], queue: ['Saved on this phone', I.sync] };
-  var STAFF_NAV = ['tasks', 'people', 'path', 'capture', 'qr', 'queue', 'members', 'groups', 'stewards'];
-  var BY_ROLE = { 'Admin': STAFF_NAV, 'Leader': STAFF_NAV, 'Follow-up worker': ['tasks', 'people', 'capture', 'queue'], 'Counsellor': ['capture', 'qr', 'queue'], 'Member': [] };
-  var SECT = { members: 'Church', groups: 'Church', stewards: 'Church' };
-  var SHORT = { tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards' };
+  var STAFF_NAV = ['dash', 'tasks', 'people', 'path', 'capture', 'qr', 'queue', 'members', 'groups', 'stewards', 'requests', 'away', 'home'];
+  var BY_ROLE = { 'Admin': STAFF_NAV.concat(['admin']), 'Leader': STAFF_NAV, 'Follow-up worker': ['tasks', 'people', 'capture', 'queue', 'home', 'requests', 'away'],
+    'Counsellor': ['capture', 'qr', 'queue', 'home', 'requests', 'away'], 'Member': ['home', 'requests', 'away'] };
+  var SECT = { dash: 'Overview', members: 'Church', groups: 'Church', stewards: 'Church', requests: 'Church', away: 'Church', home: 'Church', admin: 'System' };
+  var SHORT = { dash: 'Dashboard', tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards', requests: 'Requests', away: 'Away', home: 'My space', admin: 'Admin' };
   function item(k) { return k === 'more' ? ['More', I.more] : (P.views[k] ? [P.views[k].title, P.views[k].icon] : NAV[k] || ['Welcome', '']); }
   var VIEW = null, USER = P.get('user'), QN = 0;
 
@@ -62,16 +63,17 @@
     $('sidefoot').innerHTML = esc(USER.name) + '<br><span style="opacity:.7">' + esc(USER.role) + (USER.campus ? ' · ' + esc(USER.campus) : '') + '</span>';
     var nav = BY_ROLE[USER.role] || [];
     if (nav.indexOf(VIEW) < 0 && VIEW !== 'more') VIEW = nav[0] || 'none';
-    netState(); render(); trySync();
+    netState(); render(); trySync(); if (P.refreshBadges) setTimeout(P.refreshBadges, 800);
   }
   function navHtml() {
-    var nav = BY_ROLE[USER.role] || [], last = null, cnt = { queue: QN, tasks: P.taskCount || 0 };
+    var B = P.badges || {}, nav = BY_ROLE[USER.role] || [], last = null, cnt = { queue: QN, tasks: P.taskCount || 0, requests: B.decide || 0, home: (B.unread || 0) + (B.duty || 0) };
     $('sidenav').innerHTML = nav.map(function (k) {
       var l = SECT[k] || 'Convert pathway', h = '', it = item(k);
       if (l !== last) { h = '<div class="navl">' + l + '</div>'; last = l; }
       return h + '<button class="nav' + (k === VIEW ? ' on' : '') + '" data-go="' + k + '">' + it[1] + it[0] + (cnt[k] ? '<span class="ct">' + cnt[k] + '</span>' : '') + '</button>';
     }).join('') + '<div class="navl">Account</div><button class="nav" data-out="1">' + I.out + 'Sign out</button>';
     var mob = nav.length > 5 ? nav.slice(0, 4).concat(['more']) : nav;
+    if (mob.indexOf('more') >= 0) cnt.more = nav.slice(4).reduce(function (t, k) { return t + (k === 'queue' ? 0 : cnt[k] || 0); }, 0);
     $('mnav').hidden = nav.length < 2;
     $('mnav').innerHTML = mob.map(function (k) {
       var it = item(k), on = k === VIEW || (k === 'more' && mob.indexOf(VIEW) < 0);
@@ -83,7 +85,8 @@
     var nav = BY_ROLE[USER.role] || [];
     return '<div class="card">' + nav.map(function (k) {
       var it = item(k);
-      return '<div class="row click" data-go="' + k + '"><div class="av" style="background:var(--teal-l);color:var(--teal)">' + it[1].replace('<svg', '<svg width="18" height="18"') + '</div><div class="meta"><b>' + it[0] + '</b></div><span class="muted">›</span></div>';
+      var B = P.badges || {}, n = { tasks: P.taskCount, requests: B.decide, home: (B.unread || 0) + (B.duty || 0), queue: QN }[k];
+      return '<div class="row click" data-go="' + k + '"><div class="av" style="background:var(--teal-l);color:var(--teal)">' + it[1].replace('<svg', '<svg width="18" height="18"') + '</div><div class="meta"><b>' + it[0] + '</b></div>' + (n ? '<span class="tag gold">' + n + '</span>' : '') + '<span class="muted">›</span></div>';
     }).join('') + '<div class="row click" data-out="1"><div class="av">' + I.out.replace('<svg', '<svg width="18" height="18"') + '</div><div class="meta"><b>Sign out</b><span>' + esc(USER.name) + ' · ' + esc(USER.role) + '</span></div></div></div>';
   }
   P.app = {

@@ -143,6 +143,10 @@ body.locked{overflow:hidden}
 .mini .inp{padding:7px 10px;width:auto;flex:1;min-width:130px}
 .mini select.inp{flex:0 1 auto;min-width:110px}
 .hide-d{display:none}
+.hb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card.click{cursor:pointer}.card.click:hover{border-color:var(--teal)}
+details summary::-webkit-details-marker{color:var(--muted)}
+textarea.inp{resize:vertical}
 .empty{padding:30px;text-align:center;color:var(--muted)}
 a.btn{text-decoration:none}
 .btn.wa{background:#25A35A}.btn.wa:hover{background:#1d8a4b}

@@ -1,6 +1,6 @@
 /* Pathway service worker: keeps the app working offline. Change VERSION after every update so phones pick it up. */
-var VERSION = 'pathway-v2';
-var FILES = ['./', 'index.html', 'register.html', 'app.css', 'config.js', 'core.js', 'app.js', 'tracker.js', 'register.js', 'lib/qrcode.js',
+var VERSION = 'pathway-v3';
+var FILES = ['./', 'index.html', 'register.html', 'app.css', 'config.js', 'core.js', 'app.js', 'tracker.js', 'church.js', 'guide.html', 'register.js', 'lib/qrcode.js',
   'manifest.webmanifest', 'img/logo-full.png', 'img/logo-mark.png', 'img/icon-192.png', 'img/icon-512.png', 'img/apple-touch-icon.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));

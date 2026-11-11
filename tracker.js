@@ -14,7 +14,7 @@
     phone: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
     wa: '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.2-.2-.4-.3z"/></svg>'
   };
-  var S = {}, KEYS = ['lookups', 'people', 'members', 'groups', 'stewards'];
+  var S = {}, KEYS = ['lookups', 'people', 'members', 'groups', 'stewards', 'dash', 'requests', 'away', 'home', 'admin'];
   var F = { q: '', stage: 0, status: 'All' }, MF = { q: '', role: 'All', bday: false }, MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   // ---------- data ----------
@@ -247,7 +247,8 @@
       '<div class="mini" style="margin-bottom:14px"><input class="inp" id="ln2" placeholder="Next action (optional)"><input class="inp" id="ld" type="date" aria-label="Next action date" style="flex:0 1 160px"><button class="btn sm" id="lbtn2">Log</button></div>' +
       '<div class="log">' + ((p.followups || []).map(function (l) {
         return '<div class="e"><b>' + esc(l.type) + '</b> · ' + esc(l.outcome) + (l.next ? '<div class="small">Next: ' + esc(l.next) + (l.nextDate ? ' by ' + fmt(l.nextDate) : '') + '</div>' : '') + '<div class="small muted">' + fmt(l.time) + ' · ' + esc(l.by) + '</div></div>';
-      }).join('') || '<div class="muted small">No contact logged yet</div>') + '</div></div></div>';
+      }).join('') || '<div class="muted small">No contact logged yet</div>') + '</div></div>' +
+      (user().role === 'Admin' && !p.offline ? '<div class="card"><h3>Data protection</h3><p class="small muted" style="margin-top:-6px">Only if this person asks the church to delete their details. Their name, phone, email, area, care needs and prayer note are removed; anonymous counts stay.</p><button class="btn ghost sm" id="pdel" style="color:var(--red)">Delete personal details</button></div>' : '') + '</div>';
     openDrawer(h);
     bindPerson(p);
   }
@@ -264,6 +265,10 @@
     $('pms').onclick = function (e) {
       var c = e.target.closest('.chip'); if (!c) return; c.classList.toggle('on');
       upd({ milestones: [].map.call(this.querySelectorAll('.chip.on'), function (x) { return x.textContent; }) }, 'Milestones saved ✓');
+    };
+    if ($('pdel')) $('pdel').onclick = function () {
+      if (!window.confirm('Permanently remove ' + nm(p) + '\'s personal details? This cannot be undone.')) return;
+      api('deletePersonData', { id: p.id }).then(function () { P.toast('Personal details removed'); stale('people', 'members'); S._dirty = true; P.closeDrawer(); }).catch(function (e) { P.toast(e.message); });
     };
     $('lbtn2').onclick = function () {
       var b = this; busy(b, true);
@@ -396,7 +401,7 @@
     Promise.all([load('lookups', 'lookups'), load('stewards', 'listStewards')]).then(function (r) {
       if (gone(tk, vw)) return;
       var d = r[1].departments, st = r[1].stewards;
-      v.innerHTML = '<div class="banner">🗓 The Sunday rota (built automatically, skipping anyone on the away log) arrives in the next update. For now, give each steward a department and training status from the Members screen.</div>' +
+      v.innerHTML = '<div id="rotaBox"></div>' +
         '<div class="grid g3">' + (d.map(function (x) {
           var pct = x.need ? Math.min(100, x.count / x.need * 100) : 100, cls = !x.need || x.count >= x.need ? 'green' : x.count >= x.need * 0.6 ? 'amber' : 'red';
           return '<div class="card"><h3>' + esc(x.name) + '<span class="sp"></span><span class="tag ' + cls + '">' + x.count + (x.need ? '/' + x.need : '') + '</span></h3><div class="small muted">Head: ' + esc(x.head || 'not set') + ' · ' + x.need + ' needed per Sunday</div>' +
@@ -406,8 +411,15 @@
         (st.sort(function (a, b) { return (a.dept + a.name).localeCompare(b.dept + b.name); }).map(function (m) {
           return '<tr class="click" data-member="' + esc(m.key) + '"><td><b>' + esc(m.name) + '</b><div class="small muted">' + esc(m.campus || '') + '</div></td><td>' + esc(m.dept) + '</td><td class="hm">' + trainTag(m.training) + '</td><td class="hm">' + roleTag(m.role) + '</td></tr>';
         }).join('') || '<tr><td colspan="4" class="empty">No stewards yet</td></tr>') + '</tbody></table></div>';
+      if (P.rotaBox) P.rotaBox($('rotaBox'));
     }).catch(function (e) { if (!gone(tk, vw)) fail(v, e); });
   } };
+
+  // shared with church.js (step 3 screens)
+  P.T = { I: I, S: S, api: api, stale: stale, fmt: fmt, ini: ini, opts: opts, csv: csv, busy: busy, ago: ago, digits: digits, actTag: actTag, stTag: stTag,
+    openDrawer: openDrawer, dhead: dhead, loading: loading, fail: fail, user: user, pastoral: pastoral, openPerson: openPerson,
+    guard: function () { var tk = ++RT, vw = P.app.view(); return function () { return gone(tk, vw); }; },
+    cache: function (k, j) { S[k] = j; P.set('c_' + k, j); return j; }, saved: function (k) { return S[k] || P.get('c_' + k); } };
 
   // ---------- taps ----------
   document.addEventListener('click', function (e) {
