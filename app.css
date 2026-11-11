@@ -185,3 +185,4 @@ a.btn{text-decoration:none}
  .mnav svg{width:22px;height:22px}
  .hide-m{display:none}
 }
+.hb.w{grid-template-columns:minmax(90px,38%) 1fr 72px}.hb.w b{text-align:right;white-space:nowrap}

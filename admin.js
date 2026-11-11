@@ -4,8 +4,8 @@
   var P = window.Pathway, T = P.T, esc = P.esc, $ = function (id) { return document.getElementById(id); };
   var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>';
   var SEC_ADMIN = [['overview', 'Overview'], ['workers', 'Workers & PINs'], ['campuses', 'Campuses'], ['events', 'Events & QR'], ['stages', 'Pathway stages'], ['groups', 'Small groups'],
-    ['departments', 'Departments'], ['approvals', 'Approvals'], ['templates', 'Service templates'], ['settings', 'Rules'], ['backup', 'Export & backup'], ['audit', 'Audit trail']];
-  var SEC_LEADER = [['workers', 'Workers & PINs'], ['events', 'Events & QR'], ['groups', 'Small groups'], ['departments', 'Departments'], ['templates', 'Service templates']];
+    ['departments', 'Departments'], ['approvals', 'Approvals'], ['templates', 'Service templates'], ['settings', 'Rules'], ['bulk', 'Bulk upload'], ['backup', 'Export & backup'], ['audit', 'Audit trail']];
+  var SEC_LEADER = [['workers', 'Workers & PINs'], ['events', 'Events & QR'], ['groups', 'Small groups'], ['departments', 'Departments'], ['templates', 'Service templates'], ['bulk', 'Bulk upload']];
   var INTRO = {
     workers: 'People who sign in to Pathway. Set or reset a PIN here; a locked worker is unlocked by giving a new PIN. Removing someone signs them out everywhere but keeps their history.',
     campuses: 'Renaming a campus updates it everywhere (people, members, groups, workers, events).',
@@ -24,9 +24,84 @@
     $('aseg').onclick = function (e) { var b = e.target.closest('[data-sec]'); if (b) { SEC = b.dataset.sec; P.app.render(); } };
     var box = $('abox'), gone = T.guard();
     box.innerHTML = '<div class="card muted">Loading…</div>';
-    var f = { overview: overview, approvals: approvals, templates: templates, backup: backup, audit: audit }[SEC];
+    var f = { overview: overview, approvals: approvals, templates: templates, backup: backup, audit: audit, bulk: bulk }[SEC];
     (f ? f(box, gone) : listSection(box, SEC, gone)).catch(function (e) { if (!gone()) T.fail(box, e); });
   } };
+
+  // ---------- bulk upload: download a template, fill it in Excel, upload many records at once ----------
+  var IMP = { list: '', rows: null, head: null, res: null };
+  function parseTable(text) {
+    text = String(text || '').replace(/^﻿/, '').replace(/\r\n?/g, '\n');
+    var first = text.split('\n')[0], d = first.indexOf('\t') >= 0 ? '\t' : (first.split(';').length > first.split(',').length ? ';' : ',');
+    var rows = [], row = [], c = '', q = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      if (q) { if (ch === '"') { if (text[i + 1] === '"') { c += '"'; i++; } else q = false; } else c += ch; continue; }
+      if (ch === '"' && c === '') q = true; else if (ch === d) { row.push(c); c = ''; } else if (ch === '\n') { row.push(c); rows.push(row); row = []; c = ''; } else c += ch;
+    }
+    if (c !== '' || row.length) { row.push(c); rows.push(row); }
+    return rows.filter(function (r) { return r.some(function (x) { return String(x).trim() !== ''; }); });
+  }
+  function bulk(box, gone) {
+    return T.api('importInfo').then(function (d) {
+      if (gone()) return;
+      if (!d.lists.some(function (l) { return l.list === IMP.list; })) IMP.list = d.lists[0].list;
+      var L = d.lists.filter(function (l) { return l.list === IMP.list; })[0], show = function (c) { return P.cwText(c); };
+      box.innerHTML = '<div class="grid g2" style="align-items:start"><div class="card"><h3>1. Choose what to upload</h3>' +
+        '<select class="inp" id="bl">' + d.lists.map(function (l) { return '<option value="' + l.list + '"' + (l.list === IMP.list ? ' selected' : '') + '>' + esc(show(l.label)) + '</option>'; }).join('') + '</select>' +
+        '<p class="small muted">Best order: ' + esc(d.lists.map(function (l) { return show(l.label.split(' (')[0]); }).join(' → ')) + '. Small groups and members need their leaders, departments and ' + esc(P.cw(1, 1)) + ' to exist first.</p>' +
+        '<h3 style="margin-top:14px">2. Download the template</h3><p class="small" style="margin-top:-4px">Open it in Excel, type one record per row under the headings, and delete the grey "e.g." row. Save it as <b>CSV</b>. Columns marked * must be filled.</p>' +
+        '<div class="small" style="margin-bottom:10px">' + L.cols.map(function (c) { return '<div><b>' + esc(show(c.col)) + (c.req ? ' *' : '') + '</b>' + (c.note ? ' <span class="muted">· ' + esc(show(c.note)) + '</span>' : '') + '</div>'; }).join('') + '</div>' +
+        '<button class="btn ghost sm" id="btpl">Download template</button></div>' +
+        '<div class="card"><h3>3. Upload the filled template</h3><input type="file" id="bf" accept=".csv,.txt,text/csv" class="inp">' +
+        '<p class="small muted" style="margin:8px 0 4px">Or copy the rows from Excel (with the heading row) and paste them here:</p><textarea class="inp" id="bp" rows="4" placeholder="Paste from Excel"></textarea>' +
+        '<div id="bprev" style="margin-top:12px"></div></div></div><div id="bres" style="margin-top:16px"></div>';
+      $('bl').onchange = function () { IMP = { list: this.value }; P.app.render(); };
+      $('btpl').onclick = function () {
+        download('Pathway template - ' + show(L.label.split(' (')[0]) + '.csv', toCsv([L.cols.map(function (c) { return show(c.col); }),
+          L.cols.map(function (c, i) { return (i ? '' : 'e.g. ') + (c.req ? '(required) ' : '') + show(c.note || ''); })]), 'text/csv');
+      };
+      function take(text) {
+        var t = parseTable(text); if (!t.length) { $('bprev').innerHTML = ''; return; }
+        var map = {}; L.cols.forEach(function (c) { map[c.col.toLowerCase()] = c.col; map[show(c.col).toLowerCase()] = c.col; });
+        var head = t[0].map(function (h) { return map[String(h).replace(/\*/g, '').trim().toLowerCase()] || ''; });
+        var known = head.filter(String).length, missing = L.cols.filter(function (c) { return c.req && head.indexOf(c.col) < 0; });
+        IMP.rows = []; t.slice(1).forEach(function (r, i) {
+          if (/^e\.g\./i.test(String(r[0] || '').trim())) return;
+          var o = { _line: i + 2 }; head.forEach(function (k, j) { if (k) o[k] = String(r[j] == null ? '' : r[j]).trim(); }); IMP.rows.push(o);
+        });
+        if (!known || missing.length) { IMP.rows = null; $('bprev').innerHTML = '<div class="warn">' + (!known ? 'The headings were not recognised. Use the template for ' + esc(show(L.label)) + '.' : 'Missing column: ' + esc(missing.map(function (c) { return show(c.col); }).join(', '))) + '</div>'; return; }
+        if (IMP.rows.length > d.max) { $('bprev').innerHTML = '<div class="warn">That is ' + IMP.rows.length + ' rows. Upload at most ' + d.max + ' at a time: split the file.</div>'; IMP.rows = null; return; }
+        var cols = L.cols.filter(function (c) { return head.indexOf(c.col) >= 0; }).slice(0, 4);
+        $('bprev').innerHTML = '<div class="small"><b>' + IMP.rows.length + ' rows</b> ready. First few:</div><div style="overflow-x:auto"><table><thead><tr>' + cols.map(function (c) { return '<th>' + esc(show(c.col)) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+          IMP.rows.slice(0, 5).map(function (r) { return '<tr>' + cols.map(function (c) { return '<td>' + esc(r[c.col] || '—') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' +
+          '<button class="btn" id="bgo" style="margin-top:10px">Upload ' + IMP.rows.length + ' rows</button>';
+        $('bgo').onclick = function () { run(this); };
+      }
+      $('bf').onchange = function () { var f = this.files[0]; if (!f) return; if (/\.xlsx?$/i.test(f.name)) { $('bprev').innerHTML = '<div class="warn">This is an Excel file. In Excel choose File → Save As → <b>CSV</b>, then choose that file. Or copy the rows and paste them below.</div>'; return; } var rd = new FileReader(); rd.onload = function () { take(rd.result); }; rd.readAsText(f); };
+      $('bp').oninput = function () { take(this.value); };
+      function run(b) {
+        var rows = IMP.rows.slice(), all = [], added = 0, updated = 0; T.busy(b, true);
+        (function next(k) {
+          if (k >= rows.length) return finish();
+          b.textContent = 'Uploading ' + Math.min(k + 50, rows.length) + ' of ' + rows.length + '…';
+          T.api('bulkImport', { list: L.list, rows: rows.slice(k, k + 50) }).then(function (j) {
+            added += j.added; updated += j.updated; j.results.forEach(function (x) { x.row = rows[k + x.i]; all.push(x); }); next(k + 50);
+          }).catch(function (e) { T.busy(b, false); b.textContent = 'Try again'; P.toast(e.message); });
+        })(0);
+        function finish() {
+          T.stale('lookups', 'people', 'members', 'groups', 'stewards');
+          var bad = all.filter(function (x) { return !x.ok; }), skip = all.filter(function (x) { return x.action === 'skipped'; }).length;
+          IMP.rows = null; $('bprev').innerHTML = ''; $('bp').value = ''; $('bf').value = '';
+          $('bres').innerHTML = '<div class="card"><h3>Upload finished</h3><div class="small"><b>' + added + '</b> added · <b>' + updated + '</b> updated' + (skip ? ' · ' + skip + ' already there' : '') + ' · <b' + (bad.length ? ' style="color:var(--red)"' : '') + '>' + bad.length + '</b> not uploaded</div>' +
+            (bad.length ? '<div style="margin-top:10px">' + bad.map(function (x) { return '<div class="small">Row ' + x.row._line + ': ' + esc(x.error) + '</div>'; }).join('') + '</div><button class="btn ghost sm" id="bbad" style="margin-top:10px">Download the rows not uploaded</button><p class="small muted">Fix them in that file, then upload it again. Rows already uploaded are not doubled.</p>' : '') + '</div>';
+          if ($('bbad')) $('bbad').onclick = function () {
+            download('Pathway - fix these rows.csv', toCsv([L.cols.map(function (c) { return show(c.col); }).concat(['Problem'])].concat(bad.map(function (x) { return L.cols.map(function (c) { return x.row[c.col] || ''; }).concat([x.error]); }))), 'text/csv');
+          };
+        }
+      }
+    });
+  }
 
   // ---------- generic list (add / edit / remove) ----------
   function cell(f, r) {

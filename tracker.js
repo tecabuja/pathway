@@ -22,7 +22,7 @@
   function pastoral() { return ['Admin', 'Leader'].indexOf(user().role) >= 0; }
   function api(action, data) {
     if (!P.online()) return Promise.reject(new Error('You are offline. This change needs internet; please try again when connected.'));
-    if (!/^(list|get|lookups|badges|home|dashboard|adminList|adminInfo|gridLookups|config|checkPhone)/.test(action)) P._force = true; // a change was made: next screen loads fresh
+    if (!/^(list|get|lookups|badges|home|dashboard|adminList|adminInfo|gridLookups|config|checkPhone|formList|formGet|msgList|msgGet|msgAudience|autoPreview)/.test(action)) P._force = true; // a change was made: next screen loads fresh
     return P.call(action, Object.assign({ token: P.get('token') }, data || {})).catch(function (e) {
       if (e.auth) P.app.showLogin(e.message);
       throw e;
@@ -60,10 +60,10 @@
   function stageName(n) { var s = stages().filter(function (x) { return x.n === n; })[0]; return s ? s.name : 'Stage ' + n; }
   function short(n) { return stageName(n).split(' / ')[0]; }
   function digits(ph) { return String(ph || '').replace(/[^\d]/g, ''); }
-  function tel(p) { return 'tel:+' + digits(p.phone); }
+  function tel(p) { return P.telLink(p.phone); }
   function wa(p) {
     var me = (user().name || '').split(' ')[0], ch = P.config().church || 'The Elevation Church';
-    return 'https://wa.me/' + digits(p.phone) + '?text=' + encodeURIComponent('Hi ' + p.first + ', it\'s ' + me + ' from ' + ch + ' 😊 We are so glad you made a decision with us. How are you doing this week?');
+    return P.waLink(p.phone, 'Hi ' + p.first + ', it\'s ' + me + ' from ' + ch + ' 😊 We are so glad you made a decision with us. How are you doing this week?');
   }
   function opts(list, cur, blank) {
     return (blank != null ? '<option value="">' + esc(blank) + '</option>' : '') + list.map(function (x) {
@@ -359,7 +359,7 @@
     var isNew = !key, m = isNew ? { name: '', role: 'Member', campus: user().campus || '' } : findMember(key), L = S.lookups || {}; if (!m) return;
     var lv = { 'Member': 1, 'Steward': 3, 'Group leader': 4, 'Department head': 4 }[m.role] || 1;
     var h = isNew ? dhead('Add a member', 'For existing members who did not come through the convert form') + '<div class="db">' : dhead(m.name, esc(m.role) + (m.campus ? ' · ' + esc(m.campus) : '') + (m.joined ? ' · member since ' + fmt(m.joined) : ''),
-      m.phone ? '<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap"><a class="btn gold sm" href="tel:+' + digits(m.phone) + '">' + I.phone + ' Call</a><a class="btn sm wa" href="https://wa.me/' + digits(m.phone) + '" target="_blank" rel="noopener">' + I.wa + ' WhatsApp</a></div>' : '') + '<div class="db">';
+      m.phone ? '<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap"><a class="btn gold sm" href="' + P.telLink(m.phone) + '">' + I.phone + ' Call</a><a class="btn sm wa" href="' + P.waLink(m.phone) + '" target="_blank" rel="noopener">' + I.wa + ' WhatsApp</a></div>' : '') + '<div class="db">';
     if (!isNew) h += '<div class="card"><h3>Growth track</h3><div class="tl">' + ['Membership', 'TECI', 'Serving', 'Leadership'].map(function (s, i) {
       return '<div class="s ' + (i < lv - 1 ? 'done' : i === lv - 1 ? 'cur' : '') + '"><i>' + (i < lv - 1 ? '✓' : i + 1) + '</i>' + s + '</div>';
     }).join('') + '</div></div>';
@@ -373,12 +373,14 @@
       '<div class="f"><label for="mdept">Department (serving)</label><select class="inp" id="mdept">' + opts((L.departments || []).map(function (d) { return d.name; }), m.dept, 'Not serving yet') + '</select></div>' +
       '<div class="f"><label for="mtrain">Steward training</label><select class="inp" id="mtrain">' + opts(L.training || ['Not started', 'In progress', 'Completed'], m.training, '—') + '</select></div>' +
       '<div class="f"><label for="mbm">Birthday month</label><select class="inp" id="mbm">' + opts(MONTHS, m.bmonth, '—') + '</select></div>' +
+      '<div class="f"><label for="mbd">Birthday day</label><input class="inp" id="mbd" type="number" min="1" max="31" inputmode="numeric" placeholder="e.g. 14" value="' + esc(m.bday || '') + '"></div>' +
+      '<div class="f"><label for="memail">Email (for birthday and event emails)</label><input class="inp" id="memail" type="email" value="' + esc(m.email || '') + '"></div>' +
       '<div class="full" style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">' + (isNew ? '' : '<button class="btn ghost" id="mrm" style="color:var(--red)">Remove from directory</button><span class="sp" style="flex:1"></span>') + (m.personId ? '<button class="btn ghost" data-person="' + esc(m.personId) + '">Open convert journey</button>' : '') + '<button class="btn" id="msave">' + (isNew ? 'Add member' : 'Save changes') + '</button></div></div>' +
       '<div class="small muted" style="margin-top:10px">Choosing a department makes a Member a Steward automatically. To let a member sign in, add them as a worker with role Member in Admin & settings.</div></div></div>';
     openDrawer(h);
     $('msave').onclick = function () {
       var b = this; busy(b, true);
-      var vals = { name: $('mname').value.trim(), phone: $('mphone').value.trim(), campus: $('mcamp').value, area: $('marea').value.trim(), role: $('mrole').value, group: $('mgroup').value, dept: $('mdept').value, training: $('mtrain').value, bmonth: $('mbm').value };
+      var vals = { name: $('mname').value.trim(), phone: $('mphone').value.trim(), campus: $('mcamp').value, area: $('marea').value.trim(), role: $('mrole').value, group: $('mgroup').value, dept: $('mdept').value, training: $('mtrain').value, bmonth: $('mbm').value, bday: $('mbd').value.trim(), email: $('memail').value.trim() };
       if (!vals.name) { busy(b, false); P.toast('Enter the name'); return; }
       (isNew ? api('createMember', { member: vals }) : api('updateMember', { key: m.key, changes: vals })).then(function () {
         P.toast(isNew ? 'Member added ✓' : 'Saved ✓'); stale('members', 'stewards', 'groups'); S._dirty = true; P.closeDrawer();

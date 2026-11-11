@@ -17,6 +17,29 @@
   // What the church calls a campus (Admin & settings > Rules > Campus word). cw(plural, lower).
   P.cw = function (pl, lo) { var c = P.config() || {}, s = pl ? (c.campusWords || 'Campuses') : (c.campusWord || 'Campus'); return lo ? s.toLowerCase() : s; };
   P.cwText = function (t) { return String(t == null ? '' : t).replace(/\b(Campuses|campuses|Campus|campus)\b/g, function (m) { return P.cw(/es$/.test(m), m[0] === 'c'); }); };
+  /** Phone number in international form for WhatsApp / calls: 0803… becomes 234803… using the church's default country code. */
+  P.intl = function (ph) {
+    var raw = String(ph || '').trim(), d = raw.replace(/\D/g, ''), cc = String((P.config() || {}).defaultCC || '+234').replace(/\D/g, '') || '234';
+    if (!d) return '';
+    if (/^\+/.test(raw)) return d;
+    if (/^00/.test(d)) return d.slice(2);
+    if (/^0/.test(d)) return cc + d.replace(/^0+/, '');
+    return d.length <= 10 ? cc + d : d;
+  };
+  P.waLink = function (ph, text) { var n = P.intl(ph); return 'https://wa.me/' + n + (text ? '?text=' + encodeURIComponent(text) : ''); };
+  P.telLink = function (ph) { var n = P.intl(ph); return n ? 'tel:+' + n : '#'; };
+  P.smsLink = function (ph, text) { return 'sms:+' + P.intl(ph) + (text ? (/iPhone|iPad/.test(navigator.userAgent) ? '&' : '?') + 'body=' + encodeURIComponent(text) : ''); };
+  var TITLES = /^(pastor|pst|rev|reverend|dr|mr|mrs|miss|ms|bro|brother|sis|sister|deacon|deaconess|elder|minister|evang|prof|engr|chief|barr)\.?$/i;
+  P.firstName = function (n) { var w = String(n || '').trim().split(/\s+/).filter(String); return !w.length ? '' : TITLES.test(w[0]) && w[1] ? w[0] + ' ' + w[1] : w[0]; };
+  /** Puts a person's details into a message ({first} {name} {church} {campus} {group} {department} {link}); blank names are tidied away. */
+  P.fill = function (text, r) {
+    r = r || {};
+    var map = { first: P.firstName(r.name || r.n), name: String(r.name || r.n || '').trim(), church: (P.config() || {}).church || 'The Elevation Church',
+      campus: r.campus || r.c || '', group: r.group || r.g || '', department: r.dept || r.d || '', link: r.link || '' };
+    return String(text || '').replace(/\{(\w+)\}/g, function (m, k) { k = k.toLowerCase(); return k in map ? map[k] : m; })
+      .replace(/[ \t]+([,!.?])/g, '$1').replace(/,{2,}/g, ',').replace(/[ \t]{2,}/g, ' ').replace(/^[ \t]*[,!][ \t]*/gm, '').replace(/[ \t]+$/gm, '');
+  };
+  P.appBase = function () { return location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, ''); };
   P.get = function (k, d) { try { var v = localStorage.getItem('pw_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   P.set = function (k, v) { try { if (v == null) localStorage.removeItem('pw_' + k); else localStorage.setItem('pw_' + k, JSON.stringify(v)); } catch (e) {} };
   P.uid = function () { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); };

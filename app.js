@@ -13,10 +13,10 @@
   P.views = P.views || {};
   var NAV = { capture: ['Capture convert', I.add], qr: ['QR codes', I.qr], queue: ['Saved on this phone', I.sync] };
   var STAFF_NAV = ['dash', 'tasks', 'people', 'path', 'capture', 'qr', 'queue', 'members', 'groups', 'stewards', 'grid', 'requests', 'away', 'home'];
-  var BY_ROLE = { 'Admin': STAFF_NAV.concat(['admin']), 'Leader': STAFF_NAV.concat(['admin']), 'Follow-up worker': ['tasks', 'people', 'capture', 'queue', 'home', 'grid', 'requests', 'away'],
+  var BY_ROLE = { 'Admin': STAFF_NAV.concat(['forms', 'messages', 'admin']), 'Leader': STAFF_NAV.concat(['forms', 'messages', 'admin']), 'Follow-up worker': ['tasks', 'people', 'capture', 'queue', 'home', 'grid', 'requests', 'away'],
     'Counsellor': ['capture', 'qr', 'queue', 'home', 'grid', 'requests', 'away'], 'Member': ['home', 'grid', 'requests', 'away'] };
-  var SECT = { dash: 'Overview', members: 'Church', groups: 'Church', stewards: 'Church', grid: 'Church', requests: 'Church', away: 'Church', home: 'Church', admin: 'System' };
-  var SHORT = { dash: 'Dashboard', tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards', grid: 'Grids', requests: 'Requests', away: 'Away', home: 'My space', admin: 'Admin' };
+  var SECT = { dash: 'Overview', members: 'Church', groups: 'Church', stewards: 'Church', grid: 'Church', requests: 'Church', away: 'Church', home: 'Church', forms: 'Reach out', messages: 'Reach out', admin: 'System' };
+  var SHORT = { dash: 'Dashboard', tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards', grid: 'Grids', requests: 'Requests', away: 'Away', home: 'My space', forms: 'Polls', messages: 'Messages', admin: 'Admin' };
   function item(k) { return k === 'more' ? ['More', I.more] : (P.views[k] ? [P.views[k].title, P.views[k].icon] : NAV[k] || ['Welcome', '']); }
   var VIEW = null, USER = P.get('user'), QN = 0;
 
