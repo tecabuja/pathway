@@ -12,11 +12,11 @@
   };
   P.views = P.views || {};
   var NAV = { capture: ['Capture convert', I.add], qr: ['QR codes', I.qr], queue: ['Saved on this phone', I.sync] };
-  var STAFF_NAV = ['dash', 'tasks', 'people', 'path', 'capture', 'qr', 'queue', 'members', 'groups', 'stewards', 'requests', 'away', 'home'];
-  var BY_ROLE = { 'Admin': STAFF_NAV.concat(['admin']), 'Leader': STAFF_NAV, 'Follow-up worker': ['tasks', 'people', 'capture', 'queue', 'home', 'requests', 'away'],
-    'Counsellor': ['capture', 'qr', 'queue', 'home', 'requests', 'away'], 'Member': ['home', 'requests', 'away'] };
-  var SECT = { dash: 'Overview', members: 'Church', groups: 'Church', stewards: 'Church', requests: 'Church', away: 'Church', home: 'Church', admin: 'System' };
-  var SHORT = { dash: 'Dashboard', tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards', requests: 'Requests', away: 'Away', home: 'My space', admin: 'Admin' };
+  var STAFF_NAV = ['dash', 'tasks', 'people', 'path', 'capture', 'qr', 'queue', 'members', 'groups', 'stewards', 'grid', 'requests', 'away', 'home'];
+  var BY_ROLE = { 'Admin': STAFF_NAV.concat(['admin']), 'Leader': STAFF_NAV, 'Follow-up worker': ['tasks', 'people', 'capture', 'queue', 'home', 'grid', 'requests', 'away'],
+    'Counsellor': ['capture', 'qr', 'queue', 'home', 'grid', 'requests', 'away'], 'Member': ['home', 'grid', 'requests', 'away'] };
+  var SECT = { dash: 'Overview', members: 'Church', groups: 'Church', stewards: 'Church', grid: 'Church', requests: 'Church', away: 'Church', home: 'Church', admin: 'System' };
+  var SHORT = { dash: 'Dashboard', tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards', grid: 'Grids', requests: 'Requests', away: 'Away', home: 'My space', admin: 'Admin' };
   function item(k) { return k === 'more' ? ['More', I.more] : (P.views[k] ? [P.views[k].title, P.views[k].icon] : NAV[k] || ['Welcome', '']); }
   var VIEW = null, USER = P.get('user'), QN = 0;
 
@@ -102,7 +102,7 @@
   function render() {
     navHtml();
     $('title').textContent = item(VIEW)[0];
-    var v = $('view');
+    var v = $('view'); v.onclick = v.oninput = v.onchange = null;
     if (VIEW === 'more') { v.innerHTML = vMore(); return; }
     if (P.views[VIEW]) { P.views[VIEW].render(v); return; }
     if (VIEW === 'capture') { v.innerHTML = vCapture(); bindCapture(); }

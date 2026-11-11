@@ -143,6 +143,17 @@ body.locked{overflow:hidden}
 .mini .inp{padding:7px 10px;width:auto;flex:1;min-width:130px}
 .mini select.inp{flex:0 1 auto;min-width:110px}
 .hide-d{display:none}
+/* service grid */
+.gi{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#FDFCFA}
+.gi-top{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.gtime{font-weight:700;color:var(--teal);font-size:12px}
+.gbar{position:sticky;bottom:0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:rgba(247,244,238,.95);backdrop-filter:blur(6px);padding:12px 0;margin-top:16px;border-top:1px solid var(--line);z-index:4}
+.ghead{text-align:center;margin-bottom:12px}.gch{font-weight:800;letter-spacing:.04em;color:var(--teal-d)}.gtitle{font-weight:800;margin-top:6px;color:var(--gold);letter-spacing:.06em}
+.gmeta{display:grid;gap:2px;font-size:12px;margin-bottom:12px}
+.gtable{min-width:560px}.gtable td{vertical-align:top;font-size:13px}.gtable td:first-child{color:var(--muted);width:34px}
+.gsec td{background:var(--teal-l);color:var(--teal-d);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+tr.gmine td{background:var(--gold-l)}
+.chip input{display:none}
 .hb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card.click{cursor:pointer}.card.click:hover{border-color:var(--teal)}
 details summary::-webkit-details-marker{color:var(--muted)}
@@ -160,7 +171,7 @@ a.btn{text-decoration:none}
  .tools .inp{flex:1 1 100%}
  .hide-d{display:block}
 }
-@media print{aside,.top,.mnav,.noprint{display:none!important}.app{display:block}.wrap{padding:0}.card{box-shadow:none;border:0}}
+@media print{aside,.top,.mnav,.noprint,.ov,.drawer,.toast,.gbar{display:none!important}.gdoc{border:0;box-shadow:none;padding:0}.gtable{min-width:0;font-size:10.5px}.gtable .hm{display:table-cell!important}.gdoc .hide-d{display:none!important}tr.gmine td{background:none}.app{display:block}.wrap{padding:0}.card{box-shadow:none;border:0}}
 @media(max-width:1000px){.g2{grid-template-columns:1fr}}
 @media(max-width:760px){
  .app{grid-template-columns:1fr}aside{display:none}
