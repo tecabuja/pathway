@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>What's on · The Elevation Church</title>
+<meta name="description" content="Services, conferences, outreaches and gatherings coming up at The Elevation Church. Everyone is welcome.">
+<meta name="theme-color" content="#1F5A54">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="img/icon-192.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<style>
+body{background:var(--bg);margin:0}
+.wtop{position:sticky;top:0;z-index:5;background:rgba(31,90,84,.96);backdrop-filter:blur(6px);color:#fff}
+.wtop .in{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+.wtop img{height:34px;background:#fff;border-radius:8px;padding:3px 8px}.wtop b{flex:1;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}@media(max-width:560px){.wtop b{color:transparent}}
+.wtop a{color:#fff;font-weight:700;font-size:13px;text-decoration:none;border:1px solid rgba(255,255,255,.5);border-radius:20px;padding:7px 14px;white-space:nowrap}
+.hero{background:radial-gradient(1200px 400px at 80% -10%,#3b9086 0,transparent 60%),linear-gradient(160deg,var(--teal-d),var(--teal));color:#fff;padding:34px 16px 70px}
+.hero .in{max-width:980px;margin:0 auto}.hero h1{font-size:clamp(30px,6vw,46px);margin:0 0 8px;letter-spacing:-.02em}.hero p{margin:0;opacity:.92;max-width:620px;font-size:16px}
+.spot{max-width:980px;margin:-46px auto 0;padding:0 16px}
+.spot .card{display:flex;gap:18px;align-items:center;flex-wrap:wrap;border-top:4px solid var(--gold)}
+.cd{display:flex;gap:8px}.cd div{background:var(--teal-l);border-radius:12px;padding:8px 10px;text-align:center;min-width:56px}.cd b{display:block;font-size:24px;color:var(--teal-d);line-height:1.1}.cd span{font-size:11px;color:var(--muted);font-weight:600}
+.wrapw{max-width:980px;margin:0 auto;padding:18px 16px 40px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 16px}
+.mon{font-size:13px;font-weight:800;letter-spacing:.08em;color:var(--teal-d);text-transform:uppercase;margin:22px 0 10px}
+.wfoot{text-align:center;color:var(--muted);font-size:13px;padding:24px 16px 40px}
+.cal-card:target{box-shadow:0 0 0 3px var(--gold)}
+</style>
+</head>
+<body>
+<header class="wtop"><div class="in"><img src="img/logo-full.png" alt=""><b id="wch">The Elevation Church</b><a href="index.html">Leaders sign in</a></div></header>
+<section class="hero"><div class="in"><div class="small" style="font-weight:700;letter-spacing:.1em;opacity:.85">WHAT'S ON</div><h1 id="wh">Come and be part of it</h1><p id="wmsg">Loading what is coming up…</p></div></section>
+<div class="spot" id="wspot"></div>
+<main class="wrapw">
+  <div class="banner red" id="woff" hidden>📴 You are offline. Showing the last saved list.</div>
+  <div class="filters" id="wfil"></div>
+  <div id="wlist"><div class="card muted">Loading…</div></div>
+</main>
+<footer class="wfoot"><div id="wfoot"></div><div style="margin-top:8px"><a href="#" id="wshare">Share this page on WhatsApp</a></div></footer>
+<div class="toast" id="toast"></div>
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script src="events.js"></script>
+</body>
+</html>

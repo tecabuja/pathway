@@ -12,11 +12,11 @@
   };
   P.views = P.views || {};
   var NAV = { capture: ['Capture convert', I.add], qr: ['QR codes', I.qr], queue: ['Saved on this phone', I.sync] };
-  var STAFF_NAV = ['dash', 'tasks', 'people', 'path', 'capture', 'qr', 'queue', 'members', 'groups', 'stewards', 'grid', 'requests', 'away', 'home'];
-  var BY_ROLE = { 'Admin': STAFF_NAV.concat(['forms', 'messages', 'admin']), 'Leader': STAFF_NAV.concat(['forms', 'messages', 'admin']), 'Follow-up worker': ['tasks', 'people', 'capture', 'queue', 'home', 'grid', 'requests', 'away'],
-    'Counsellor': ['capture', 'qr', 'queue', 'home', 'grid', 'requests', 'away'], 'Member': ['home', 'grid', 'requests', 'away'] };
-  var SECT = { dash: 'Overview', members: 'Church', groups: 'Church', stewards: 'Church', grid: 'Church', requests: 'Church', away: 'Church', home: 'Church', forms: 'Reach out', messages: 'Reach out', admin: 'System' };
-  var SHORT = { dash: 'Dashboard', tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards', grid: 'Grids', requests: 'Requests', away: 'Away', home: 'My space', forms: 'Polls', messages: 'Messages', admin: 'Admin' };
+  var STAFF_NAV = ['dash', 'tasks', 'people', 'path', 'capture', 'qr', 'queue', 'members', 'groups', 'stewards', 'calendar', 'grid', 'requests', 'away', 'home'];
+  var BY_ROLE = { 'Admin': STAFF_NAV.concat(['forms', 'messages', 'admin']), 'Leader': STAFF_NAV.concat(['forms', 'messages', 'admin']), 'Follow-up worker': ['tasks', 'people', 'capture', 'queue', 'home', 'calendar', 'grid', 'requests', 'away'],
+    'Counsellor': ['capture', 'qr', 'queue', 'home', 'calendar', 'grid', 'requests', 'away'], 'Member': ['home', 'calendar', 'grid', 'requests', 'away'] };
+  var SECT = { dash: 'Overview', members: 'Church', groups: 'Church', stewards: 'Church', calendar: 'Church', grid: 'Church', requests: 'Church', away: 'Church', home: 'Church', forms: 'Reach out', messages: 'Reach out', admin: 'System' };
+  var SHORT = { dash: 'Dashboard', tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards', calendar: 'Calendar', grid: 'Grids', requests: 'Requests', away: 'Away', home: 'My space', forms: 'Polls', messages: 'Messages', admin: 'Admin' };
   function item(k) { return k === 'more' ? ['More', I.more] : (P.views[k] ? [P.views[k].title, P.views[k].icon] : NAV[k] || ['Welcome', '']); }
   var VIEW = null, USER = P.get('user'), QN = 0;
 
@@ -162,7 +162,7 @@
   }
   function vCapture() {
     var cfg = P.config(), on = P.online();
-    var camps = cfg.campuses.length ? cfg.campuses : ['(campuses come from the Sheet)'];
+    var camps = cfg.campuses.length ? cfg.campuses : ['(no ' + P.cw(1, 1) + ' set up yet)'];
     return (on ? '' : '<div class="banner red">📴 You\'re offline. Captures are saved on this phone and will send automatically when you are back online.</div>') +
       '<div class="banner" id="qbanner"' + (QN ? '' : ' hidden') + '>⟳ <b><span id="qcount">' + QN + '</span> capture(s)</b> saved on this phone will send when you reconnect. <button class="btn sm ghost" data-go="queue">View</button></div>' +
       '<div class="card"><form class="form" id="cform" autocomplete="off">' +
@@ -273,7 +273,7 @@
       '<div id="poster"><img src="img/logo-full.png" alt="" style="width:180px;margin:0 auto 8px;display:block"><div class="qrbox" id="qimg"></div>' +
       '<p style="font-weight:700;margin:12px 0 2px">Scan to say: “I made a decision today”</p><p class="small muted" id="qtxt" style="word-break:break-all;margin:0"></p></div>' +
       '<div class="noprint" style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn gold" id="qprint">Print poster</button><button class="btn ghost" id="qcopy">Copy link</button><a class="btn ghost" id="qopen" target="_blank" rel="noopener">Open form</a></div></div>' +
-      '<div class="card noprint"><h3>How to add an event</h3><p class="small">1. In the church Sheet, open the <b>Events</b> tab.<br>2. Add a row: a short code (for example <b>KUBWA-MISSION-DEC</b>), the event name, and the ' + P.esc(P.cw(0,1)) + ' if it belongs to one.<br>3. Set Active to <b>Yes</b>.<br>4. Sign out and back in on this phone; the event appears in the list above.</p><p class="small muted">The form works offline too: if the person\'s phone has no data, it saves and sends later.</p></div></div>';
+      '<div class="card noprint"><h3>How to add an event</h3><p class="small">1. Go to <b>Admin &amp; settings &gt; Events &amp; QR</b> and tap <b>+ Add</b>.<br>2. Give it a short code (for example <b>KUBWA-MISSION-DEC</b>), the event name, and the ' + P.esc(P.cw(0,1)) + ' if it belongs to one.<br>3. Come back here: the event appears in the list above with its own QR code.</p><p class="small muted">The form works offline too: if the person\'s phone has no data, it saves and sends later.</p></div></div>';
   }
   function bindQR() {
     var draw = function () {

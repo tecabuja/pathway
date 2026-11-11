@@ -1,4 +1,4 @@
-/* Pathway core: talking to the church Sheet, the offline queue and shared helpers. */
+/* Pathway core: talking to the church server, the offline queue and shared helpers. */
 (function () {
   var P = window.Pathway = {};
   P.API = window.PATHWAY_API || '';
@@ -39,6 +39,38 @@
     return String(text || '').replace(/\{(\w+)\}/g, function (m, k) { k = k.toLowerCase(); return k in map ? map[k] : m; })
       .replace(/[ \t]+([,!.?])/g, '$1').replace(/,{2,}/g, ',').replace(/[ \t]{2,}/g, ' ').replace(/^[ \t]*[,!][ \t]*/gm, '').replace(/[ \t]+$/gm, '');
   };
+  // ---------- calendar helpers (Church calendar and the public What's on page) ----------
+  function pad(n) { return ('0' + n).slice(-2); }
+  /** Reads times like "5pm", "9:30 am", "18:00", "10.30am – 1pm" (first time only). */
+  P.parseTime = function (t) {
+    var m = String(t || '').toLowerCase().match(/(\d{1,2})(?:[:.](\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?/); if (!m) return null;
+    var h = +m[1], mi = +(m[2] || 0), ap = m[3] || '';
+    if (/^p/.test(ap) && h < 12) h += 12; if (/^a/.test(ap) && h === 12) h = 0;
+    return h > 23 || mi > 59 ? null : { h: h, m: mi };
+  };
+  /** The church (Lagos) calendar day of a stored date, as a local Date at midnight, for display and comparing. */
+  P.day = function (iso) { var x = new Date(new Date(iso).getTime() + 3600000); return new Date(x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate()); };
+  P.today = function () { return P.day(new Date().toISOString()); };
+  /** When an event starts, as a real moment (Lagos time), or null if no time is set. */
+  P.startsAt = function (iso, time) { var d = P.day(iso), t = P.parseTime(time); if (!t) return null; return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), t.h - 1, t.m)); };
+  P.mapLink = function (v) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(v); };
+  /** Downloads a calendar file (.ics) that opens in Google Calendar, Outlook or the iPhone calendar. */
+  P.icsFile = function (ev) {
+    var d0 = P.day(ev.start), d1 = P.day(ev.end || ev.start), t = P.parseTime(ev.time);
+    var ymd = function (d) { return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()); };
+    var esc = function (s) { return String(s || '').replace(/[\\;,]/g, function (m) { return '\\' + m; }).replace(/\n/g, '\\n'); };
+    var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Pathway//Church calendar//EN', 'BEGIN:VEVENT', 'UID:' + (ev.id || P.uid()) + '@pathway',
+      'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z'];
+    if (t) L.push('DTSTART;TZID=Africa/Lagos:' + ymd(d0) + 'T' + pad(t.h) + pad(t.m) + '00', 'DTEND;TZID=Africa/Lagos:' + ymd(d1) + 'T' + pad(Math.min(23, t.h + 2)) + pad(t.m) + '00');
+    else { var e = new Date(d1.getTime()); e.setDate(e.getDate() + 1); L.push('DTSTART;VALUE=DATE:' + ymd(d0), 'DTEND;VALUE=DATE:' + ymd(e)); }
+    L.push('SUMMARY:' + esc(ev.title));
+    if (ev.venue) L.push('LOCATION:' + esc(ev.venue));
+    if (ev.desc || ev.link) L.push('DESCRIPTION:' + esc((ev.desc || '') + (ev.link ? '\n' + ev.link : '')));
+    L.push('END:VEVENT', 'END:VCALENDAR');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([L.join('\r\n')], { type: 'text/calendar' }));
+    a.download = String(ev.title || 'event').replace(/[^\w ]+/g, '').trim().slice(0, 40) + '.ics'; document.body.appendChild(a); a.click(); a.remove();
+  };
+  P.CAT_ICON = { Service: '⛪', Conference: '🎤', Outreach: '🤝', Prayer: '🙏', Youth: '🔥', Fellowship: '🍽️', Training: '🎓', Meeting: '👥', Other: '📌' };
   P.appBase = function () { return location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, ''); };
   P.get = function (k, d) { try { var v = localStorage.getItem('pw_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   P.set = function (k, v) { try { if (v == null) localStorage.removeItem('pw_' + k); else localStorage.setItem('pw_' + k, JSON.stringify(v)); } catch (e) {} };
@@ -53,7 +85,7 @@
 
   /** Sends one request to the Apps Script web app. Plain-text body avoids browser pre-checks. */
   P.call = function (action, data) {
-    if (!P.API) return Promise.reject(new Error('The app is not connected to the church Sheet yet (config.js).'));
+    if (!P.API) return Promise.reject(new Error('The app is not connected to the church server yet. Ask the person who set up Pathway.'));
     var body = Object.assign({ action: action }, data || {});
     var ctl = window.AbortController ? new AbortController() : null;
     var slow = false, timer = setTimeout(function () { slow = true; if (ctl) ctl.abort(); }, 60000);

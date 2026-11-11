@@ -5,7 +5,7 @@
   var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>';
   var SEC_ADMIN = [['overview', 'Overview'], ['workers', 'Workers & PINs'], ['campuses', 'Campuses'], ['events', 'Events & QR'], ['stages', 'Pathway stages'], ['groups', 'Small groups'],
     ['departments', 'Departments'], ['approvals', 'Approvals'], ['templates', 'Service templates'], ['settings', 'Rules'], ['bulk', 'Bulk upload'], ['backup', 'Export & backup'], ['audit', 'Audit trail']];
-  var SEC_LEADER = [['workers', 'Workers & PINs'], ['events', 'Events & QR'], ['groups', 'Small groups'], ['departments', 'Departments'], ['templates', 'Service templates'], ['bulk', 'Bulk upload']];
+  var SEC_LEADER = [['workers', 'My team & PINs'], ['bulk', 'Bulk upload']];
   var INTRO = {
     workers: 'People who sign in to Pathway. Set or reset a PIN here; a locked worker is unlocked by giving a new PIN. Removing someone signs them out everywhere but keeps their history.',
     campuses: 'Renaming a campus updates it everywhere (people, members, groups, workers, events).',
@@ -16,9 +16,11 @@
     settings: 'Rules the whole app follows. Tap a rule to change it.'
   };
   var SEC = 'overview';
+  P.openAdmin = function (sec) { SEC = sec; P.app.go('admin'); };
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-admin]'); if (b) { if (P.closeDrawer) P.closeDrawer(); P.openAdmin(b.dataset.admin); } });
   function secs() { return (T.user().role === 'Admin' ? SEC_ADMIN : SEC_LEADER).map(function (x) { return [x[0], P.cwText(x[1])]; }); }
 
-  P.views.admin = { title: 'Admin & settings', icon: ICON, render: function (v) {
+  P.views.admin = { get title() { var u = P.app && P.app.user && P.app.user(); return u && u.role === 'Leader' ? 'Team & PINs' : 'Admin & settings'; }, icon: ICON, render: function (v) {
     var ss = secs(); if (!ss.some(function (s) { return s[0] === SEC; })) SEC = ss[0][0];
     v.innerHTML = '<div class="tools noprint" style="flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px"><div class="seg" id="aseg" style="flex-wrap:nowrap">' + ss.map(function (s) { return '<button class="' + (SEC === s[0] ? 'on' : '') + '" data-sec="' + s[0] + '" style="white-space:nowrap">' + s[1] + '</button>'; }).join('') + '</div></div><div id="abox"></div>';
     $('aseg').onclick = function (e) { var b = e.target.closest('[data-sec]'); if (b) { SEC = b.dataset.sec; P.app.render(); } };
@@ -115,7 +117,8 @@
       var vis = d.fields.filter(function (f) { return f.k !== 'Active' && f.k !== 'What it means'; }).slice(0, list === 'routes' ? 5 : 4);
       var html = '<div class="card tablecard"><h3 style="padding-top:10px">' + esc(title || (secs().filter(function (s) { return s[0] === list; })[0] || [0, list])[1]) + '<span class="sp"></span>' +
         '<input class="inp" data-q="' + list + '" placeholder="Search" style="width:160px;padding:6px 10px">' + (d.canAdd ? '<button class="btn sm" data-new="' + list + '">+ Add</button>' : '') + '</h3>' +
-        (INTRO[list] ? '<p class="small muted" style="margin:-4px 0 8px">' + P.cwText(INTRO[list]) + '</p>' : '') +
+        (INTRO[list] ? '<p class="small muted" style="margin:-4px 0 8px">' + P.cwText(T.user().role === 'Leader' && list === 'workers' ? 'People in your team who sign in. Set or reset their PIN here; a locked person is unlocked by giving a new PIN.' : INTRO[list]) + '</p>' : '') +
+        (T.user().role === 'Leader' && list === 'workers' ? '<div class="banner" style="margin-bottom:10px">' + (d.unit ? 'You see the people in <b>' + esc(d.unit) + '</b>. Anyone you add joins ' + esc(d.unit) + '.' : 'You see your whole ' + esc(P.cw(0, 1)) + '. An admin can limit this to your own group or department.') + '</div>' : '') +
         '<table><thead><tr>' + vis.map(function (f, i) { return '<th' + (i > 1 ? ' class="hm"' : '') + '>' + esc(P.cwText(f.l)) + '</th>'; }).join('') + (d.hasActive ? '<th>Active</th>' : '') + (list === 'workers' ? '<th>Sign-in</th>' : '') + '</tr></thead><tbody data-rows="' + list + '">' +
         d.rows.map(function (r) {
           return '<tr class="click" data-edit="' + esc(r._key) + '" data-list="' + list + '" data-s="' + esc(Object.keys(r).map(function (k) { return r[k]; }).join(' ').toLowerCase()) + '">' + vis.map(function (f, i) { return '<td' + (i > 1 ? ' class="hm"' : '') + '>' + (i === 0 ? '<b>' + cell(f, r) + '</b>' : cell(f, r)) + '</td>'; }).join('') +

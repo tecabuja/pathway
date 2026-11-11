@@ -110,7 +110,7 @@
       P.badges.decide = d.toDecide.length; P.app.nav();
       v.innerHTML = '<div class="tools"><div class="seg" id="rseg">' + tabs.map(function (t) { return '<button class="' + (RF === t[0] ? 'on' : '') + '" data-rf="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><span class="sp" style="flex:1"></span><button class="btn" id="rnew">+ New request</button></div>' +
         '<div class="grid g2" style="align-items:start"><div style="display:grid;gap:14px">' + (list.map(function (r) { return reqCard(r, me); }).join('') || '<div class="card empty">' + (RF === 'decide' ? 'Nothing is waiting for your decision. 🙌' : 'No requests yet.') + '</div>') + '</div>' +
-        '<div class="card"><h3>How approvals work</h3><p class="small">Each request goes through the steps set for its type in the <b>Approval Routes</b> tab of the church Sheet. The person at each step is told, and can approve, decline or ask a question. You are told at every step.</p>' +
+        '<div class="card"><h3>How approvals work</h3><p class="small">Each request goes through the steps set for its type (Admin &amp; settings &gt; Approvals). The person at each step is told, and can approve, decline or ask a question. You are told at every step. When <b>Travel</b> or <b>Leave from duty</b> is fully approved, it goes onto the <b>Away</b> log by itself: your group leader and department head are told and you are taken off the rota for those dates.</p>' +
         d.types.map(function (t) { return '<div class="small" style="margin:6px 0"><b>' + esc(t.type) + '</b><br><span class="muted">' + t.steps.map(esc).join(' → ') + '</span></div>'; }).join('') + '</div></div>';
       $('rseg').onclick = function (e) { var b = e.target.closest('[data-rf]'); if (b) { RF = b.dataset.rf; P.app.render(); } };
       $('rnew').onclick = function () { newRequest(d.types); };
@@ -155,7 +155,8 @@
     get('away', 'listAway', null).then(function (d) {
       if (gone()) return;
       var past = T.pastoral(), today = D10(new Date());
-      v.innerHTML = '<div class="grid g2" style="align-items:start"><div style="display:grid;gap:16px">' +
+      v.innerHTML = '<div class="banner" style="margin-bottom:14px"><span><b>How it works:</b> if you serve on Sundays, first ask for permission (<b>Permissions &gt; Travel</b> or <b>Leave from duty</b>). Once it is approved, it shows here by itself. For anything else, log it below. Your group leader and department head are told, and you are taken off the rota while away.' + (past ? ' Leaders see the people in their own group or department.' : '') + '</span><button class="btn ghost sm" data-go="requests">Ask for permission</button></div>' +
+        '<div class="grid g2" style="align-items:start"><div style="display:grid;gap:16px">' +
         '<div class="card"><h3>Log a trip</h3><div class="form">' +
         '<div class="f"><label for="wt">Type</label><select class="inp" id="wt">' + T.opts(d.types, 'Travel') + '</select></div><div class="f"><label for="wd">Destination</label><input class="inp" id="wd" placeholder="e.g. Lagos"></div>' +
         '<div class="f"><label for="wf">Leaving</label><input class="inp" id="wf" type="date" value="' + today + '"></div><div class="f"><label for="wb">Back</label><input class="inp" id="wb" type="date"></div>' +

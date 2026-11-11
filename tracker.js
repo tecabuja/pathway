@@ -212,7 +212,7 @@
       (p.email ? '<a class="btn ghost sm" href="mailto:' + esc(p.email) + '">Email</a>' : '') + '</div>';
     var h = dhead(nm(p), esc(p.id) + (p.decision ? ' · ' + esc(p.decision) : '') + (p.source ? ' · ' + esc(p.source) : '') + ', ' + fmt(p.created), btns) + '<div class="db">';
     if (p.offline) h += '<div class="banner red">📴 Offline: only the basic details saved on this phone are shown. Changes need internet.</div>';
-    if (p.dup) h += '<div class="warn">⚠ Possible duplicate of <b>' + esc(p.dup) + '</b> (same phone number). An admin can check both records in the Sheet.</div>';
+    if (p.dup) h += '<div class="warn">⚠ Possible duplicate of <b>' + esc(p.dup) + '</b> (same phone number). An admin can compare both records in Converts and remove the extra one.</div>';
     // journey
     h += '<div class="card"><h3>Journey<span class="sp"></span>' + stTag(p.status) + '</h3><div class="tl">' + st.map(function (s) {
       var c = s.n < cur ? 'done' : s.n === cur ? 'cur' : '', d = s.n === cur ? p.stageDate : (reach[s.n] && reach[s.n].time);
@@ -226,7 +226,7 @@
     var groups = (L.groups || []).map(function (g) { return { v: g.name, l: g.name + (g.area ? ' · ' + g.area : '') + (g.day ? ' · ' + g.day : '') }; });
     h += '<div class="card"><h3>Who\'s in charge</h3><div class="kv">' +
       '<div><span class="k">Follow-up worker</span>' + (canP ? '<select class="inp" id="powner" style="padding:6px">' + opts([{ v: 'Unassigned', l: 'Unassigned' }].concat(workers), p.owner) + '</select>' : esc(p.owner)) + '</div>' +
-      '<div><span class="k">Small group</span><select class="inp" id="pgroup" style="padding:6px">' + opts(groups, p.group, groups.length ? 'Not in a group yet' : 'No groups in the Sheet yet') + '</select></div>' +
+      '<div><span class="k">Small group</span><select class="inp" id="pgroup" style="padding:6px">' + opts(groups, p.group, groups.length ? 'Not in a group yet' : 'No small groups set up yet') + '</select></div>' +
       (canP ? '<div><span class="k">Status</span><select class="inp" id="pstatus" style="padding:6px">' + opts(L.statuses || ['New', 'Active', 'Moved away', 'Not interested'], (L.statuses || []).indexOf(p.status) >= 0 ? p.status : 'Active') + '</select></div>' : '') +
       '<div><span class="k">Members directory</span>' + (p.isMember ? '<span class="tag green">✓ Member</span>' : '<span class="muted">Joins after Membership Class</span>') + '</div></div>';
     if (p.suggest && p.suggest.length) h += '<div class="warn" style="margin-top:12px"><b>Suggested small groups</b> (same ' + P.esc(P.cw(0,1)) + ', nearest area, with space):<br>' + p.suggest.map(function (g) {
@@ -327,7 +327,7 @@
       (ms.map(function (m) {
         return '<tr class="click" data-member="' + esc(m.key) + '"><td><div style="display:flex;gap:10px;align-items:center"><div class="av">' + esc(ini(m.name)) + '</div><div><b>' + esc(m.name) + '</b><div class="small muted">' + (m.joined ? 'Member since ' + fmt(m.joined) : esc(m.phone)) + '</div></div></div></td><td>' + roleTag(m.role) + '</td>' +
           '<td class="hm">' + esc(m.group || '—') + '</td><td class="hm">' + esc(m.dept || '—') + '</td><td class="hm">' + esc(m.campus || '—') + (m.area ? ' · ' + esc(m.area) : '') + '</td><td class="hm">' + esc(m.bmonth || '—') + '</td></tr>';
-      }).join('') || '<tr><td colspan="6" class="empty">' + (S.members.members.length ? 'No one matches these filters' : 'No members yet. Converts join automatically after Membership Class; existing members can be typed into the Members tab of the Sheet.') + '</td></tr>') + '</tbody></table>';
+      }).join('') || '<tr><td colspan="6" class="empty">' + (S.members.members.length ? 'No one matches these filters' : 'No members yet. Converts join automatically after Membership Class. Tap + Add member, or use Bulk upload in Admin & settings for many at once.') + '</td></tr>') + '</tbody></table>';
     $('mcount').textContent = ms.length + ' members';
   }
   P.views.members = { title: 'Members', icon: I.mem, render: function (v) {
@@ -404,9 +404,9 @@
           var pct = g.capacity ? Math.min(100, g.members / g.capacity * 100) : 0;
           return '<tr class="click" data-group="' + esc(g.name) + '"><td><b>' + esc(g.name) + '</b>' + (g.over ? ' <span class="tag gold">Multiply</span>' : '') + '<div class="small muted">' + esc(g.area || '—') + (g.campus ? ' · ' + esc(g.campus) : '') + '</div></td><td class="hm">' + esc(g.leader || '—') + '</td><td class="hm">' + esc(g.day || '—') + '</td>' +
             '<td style="min-width:110px"><div class="bar"><i style="width:' + pct + '%;background:' + (g.over ? 'var(--gold)' : 'var(--teal)') + '"></i></div><span class="small muted">' + g.members + ' / ' + g.capacity + (g.avg != null ? ' · avg ' + g.avg + ' attend' : '') + '</span></td></tr>';
-        }).join('') || '<tr><td colspan="4" class="empty">No small groups yet. Add them in the Groups tab of the church Sheet.</td></tr>') + '</tbody></table>' +
+        }).join('') || '<tr><td colspan="4" class="empty">No small groups yet. An admin adds them in Admin & settings > Small groups.</td></tr>') + '</tbody></table>' +
         '<div class="small muted" style="margin:10px 0">Gold bar = over capacity. When a convert reaches the Small Group stage, their profile suggests the nearest group in their ' + P.esc(P.cw(0,1)) + ' that still has space.</div></div>' +
-        '<div class="card"><h3>Adding or changing a group</h3><p class="small">1. Open the church Sheet and go to the <b>Groups</b> tab.<br>2. One row per group: name, location / area, ' + P.esc(P.cw(0,1)) + ', leader, meeting day and capacity (how many people it can hold).<br>3. Set Active to <b>Yes</b>. To close a group, set it to <b>No</b>.<br>4. Come back here and tap Refresh.</p><button class="btn ghost sm" data-reload="1">Refresh</button></div></div>';
+        (user().role === 'Admin' ? '<div class="card"><h3>Adding or changing a group</h3><p class="small">Go to <b>Admin &amp; settings &gt; Small groups</b>. Tap <b>+ Add</b> for a new group (name, area, leader, meeting day and how many people it can hold), or tap a group to change or close it. Many groups at once: <b>Bulk upload</b>.</p><button class="btn sm" data-admin="groups">Open Small groups settings</button></div>' : '<div class="card"><h3>Need a change?</h3><p class="small">Ask a church admin to add, rename or close a group.</p></div>') + '</div>';
     }).catch(function (e) { if (!gone(tk, vw)) fail(v, e); });
   } };
   function openGroup(name) {
@@ -445,12 +445,12 @@
     Promise.all([load('lookups', 'lookups'), load('stewards', 'listStewards')]).then(function (r) {
       if (gone(tk, vw)) return;
       var d = r[1].departments, st = r[1].stewards;
-      v.innerHTML = '<div id="rotaBox"></div>' +
+      v.innerHTML = '<div class="tools"><span class="small muted" style="flex:1">A steward is a member who serves in a department. Give a member a department and they appear here.</span><button class="btn sm" data-addsteward="1">+ Add steward</button></div><div id="rotaBox"></div>' +
         '<div class="grid g3">' + (d.map(function (x) {
           var pct = x.need ? Math.min(100, x.count / x.need * 100) : 100, cls = !x.need || x.count >= x.need ? 'green' : x.count >= x.need * 0.6 ? 'amber' : 'red';
           return '<div class="card"><h3>' + esc(x.name) + '<span class="sp"></span><span class="tag ' + cls + '">' + x.count + (x.need ? '/' + x.need : '') + '</span></h3><div class="small muted">Head: ' + esc(x.head || 'not set') + ' · ' + x.need + ' needed per Sunday</div>' +
             '<div class="bar" style="margin:10px 0"><i style="width:' + pct + '%;background:' + (cls === 'red' ? 'var(--red)' : 'var(--teal)') + '"></i></div><div class="small">' + (x.training ? x.training + ' still in training' : (x.count ? 'All trained ✓' : 'No stewards yet')) + '</div></div>';
-        }).join('') || '<div class="card muted">No departments yet. Add them in the Departments tab of the church Sheet.</div>') + '</div>' +
+        }).join('') || '<div class="card muted">No departments yet. An admin adds them in Admin & settings > Departments.</div>') + '</div>' +
         '<div class="card tablecard" style="margin-top:16px"><h3 style="padding-top:10px">All stewards</h3><table><thead><tr><th>Steward</th><th>Department</th><th class="hm">Training</th><th class="hm">Role</th></tr></thead><tbody>' +
         (st.sort(function (a, b) { return (a.dept + a.name).localeCompare(b.dept + b.name); }).map(function (m) {
           return '<tr class="click" data-member="' + esc(m.key) + '"><td><b>' + esc(m.name) + '</b><div class="small muted">' + esc(m.campus || '') + '</div></td><td>' + esc(m.dept) + '</td><td class="hm">' + trainTag(m.training) + '</td><td class="hm">' + roleTag(m.role) + '</td></tr>';
@@ -458,6 +458,29 @@
       if (P.rotaBox) P.rotaBox($('rotaBox'));
     }).catch(function (e) { if (!gone(tk, vw)) fail(v, e); });
   } };
+
+  // ---------- add a steward: give a member a department ----------
+  function addSteward() {
+    Promise.all([load('lookups', 'lookups'), load('members', 'listMembers')]).then(function (r) {
+      var L = r[0], ms = r[1].members.filter(function (m) { return !m.dept; }).sort(function (a, b) { return a.name.localeCompare(b.name); }), depts = (L.departments || []).map(function (d) { return d.name; });
+      openDrawer(dhead('Add a steward', 'Choose a member and the department they will serve in') + '<div class="db"><div class="card"><div class="form">' +
+        '<div class="f full"><label for="sfind">Find the member</label><input class="inp" id="sfind" placeholder="Type part of the name" autocomplete="off"></div>' +
+        '<div class="f full"><select class="inp" id="smem" size="7" aria-label="Members not serving yet" style="height:auto">' + opts(ms.map(function (m) { return { v: m.key, l: m.name + (m.group ? ' · ' + m.group : '') }; })) + '</select>' +
+        '<div class="small muted">' + ms.length + ' members are not serving yet</div></div>' +
+        '<div class="f"><label for="sdept">Department</label><select class="inp" id="sdept">' + opts(depts, '', 'Choose a department') + '</select></div>' +
+        '<div class="f"><label for="strain">Steward training</label><select class="inp" id="strain">' + opts(L.training || ['Not started', 'In progress', 'Completed'], 'Not started') + '</select></div>' +
+        '<div class="full small muted">Not in the list? Add them first in <b>Members</b> (+ Add member). For many at once use <b>Bulk upload</b> with the Members template and fill the Department column.</div>' +
+        '<div class="full" style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-close="1">Cancel</button><button class="btn" id="ssave">Make steward</button></div></div></div></div>');
+      $('sfind').oninput = function () { var q = this.value.toLowerCase(), first = null; [].forEach.call($('smem').options, function (o) { o.hidden = !!q && o.text.toLowerCase().indexOf(q) < 0; if (!o.hidden && !first) first = o; }); if (q && first) $('smem').value = first.value; };
+      $('ssave').onclick = function () {
+        var k = $('smem').value, d = $('sdept').value, b = this;
+        if (!k) { P.toast('Choose a member'); return; } if (!d) { P.toast('Choose a department'); return; }
+        busy(b, true);
+        api('updateMember', { key: k, changes: { dept: d, training: $('strain').value } }).then(function () { P.toast('Now serving in ' + d + ' ✓'); stale('members', 'stewards'); S._dirty = true; P.closeDrawer(); })
+          .catch(function (e) { busy(b, false); P.toast(e.message); });
+      };
+    }).catch(function (e) { P.toast(e.message); });
+  }
 
   // shared with church.js (step 3 screens)
   P.T = { I: I, S: S, api: api, stale: stale, fmt: fmt, ini: ini, opts: opts, csv: csv, busy: busy, ago: ago, digits: digits, actTag: actTag, stTag: stTag,
@@ -473,6 +496,7 @@
     if ((x = t.closest('[data-advance]'))) { e.stopPropagation(); advance(x.dataset.advance, +x.dataset.to, x); return; }
     if ((x = t.closest('[data-person]'))) { openPerson(x.dataset.person); return; }
     if ((x = t.closest('[data-member]'))) { openMember(x.dataset.member); return; }
+    if (t.closest('[data-addsteward]')) { addSteward(); return; }
     if ((x = t.closest('[data-group]'))) { openGroup(x.dataset.group); return; }
     if ((x = t.closest('[data-stagefilter]'))) { F.stage = +x.dataset.stagefilter; F.status = 'All'; P.app.go('people'); return; }
     if (t.closest('[data-close]') || t.id === 'ov') { P.closeDrawer(); return; }
