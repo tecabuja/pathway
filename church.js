@@ -14,12 +14,19 @@
   var reqTag = function (s) { return '<span class="tag ' + ({ Approved: 'green', Declined: 'red', Question: 'gold', Pending: 'amber' }[s] || 'grey') + '">' + esc(s) + '</span>'; };
   var dutyTag = function (s) { return '<span class="tag ' + ({ Confirmed: 'green', Scheduled: 'grey', Away: 'amber', Gap: 'red', "Can't make it": 'red' }[s] || 'grey') + '">' + esc(s === 'Gap' ? 'Gap – nobody free' : s) + '</span>'; };
 
-  /** Loads from the church server and keeps a copy for offline reading. */
-  function get(key, action, data, force) {
-    var have = T.saved(key);
-    if (have && !force && T.S[key]) return Promise.resolve(have);
+  /** Shows the last saved copy straight away and refreshes it in the background (re-drawing if anything changed).
+      After a change has been made, it waits for fresh data instead. Works offline from the saved copy. */
+  function get(key, action, data) {
+    var have = T.saved(key), view = P.app.view();
+    if (have && T.S['_f' + key]) { T.S['_f' + key] = false; return Promise.resolve(have); }
     if (!P.online()) return have ? Promise.resolve(have) : Promise.reject(new Error('You are offline and this page has not been opened on this phone yet.'));
-    return T.api(action, data).then(function (j) { return T.cache(key, j); }).catch(function (e) { if (e.network && have) { P.toast('Weak connection: showing the last saved copy'); return have; } throw e; });
+    var net = T.api(action, data).then(function (j) { var changed = JSON.stringify(j) !== JSON.stringify(have); T.cache(key, j); return { j: j, changed: changed }; });
+    if (have && !P._force) {
+      net.then(function (r) { if (r.changed && P.app.view() === view && !document.querySelector('.drawer.open')) { T.S['_f' + key] = true; P.app.render(); } }).catch(function () {});
+      return Promise.resolve(have);
+    }
+    P._force = false;
+    return net.then(function (r) { return r.j; }).catch(function (e) { if (e.network && have) { P.toast('Weak connection: showing the last saved copy'); return have; } throw e; });
   }
   function hb(name, n, max, color, suffix) {
     return '<div class="hb"><span title="' + esc(name) + '">' + esc(name) + '</span><div class="bar"><i style="width:' + (max ? Math.min(100, n / max * 100) : 0) + '%' + (color ? ';background:' + color : '') + '"></i></div><b>' + (n == null ? '—' : n + (suffix || '')) + '</b></div>';
@@ -39,7 +46,7 @@
   var DC = '';
   P.views.dash = { title: 'Dashboard', icon: I.dash, render: function (v) {
     T.loading(v); var gone = T.guard();
-    get('dash', 'dashboard', { campus: DC }, true).then(function (d) {
+    get('dash' + DC, 'dashboard', { campus: DC }).then(function (d) {
       if (gone()) return;
       var c = d.church, k = d.converts, r = d.rules, chg = k.prev30 ? Math.round((k.new30 - k.prev30) / k.prev30 * 100) : null;
       var maxS = Math.max.apply(null, d.sources.map(function (x) { return x.count; }).concat([1]));
@@ -95,7 +102,7 @@
   }
   P.views.requests = { title: 'Permissions', icon: I.ok, render: function (v) {
     T.loading(v); var gone = T.guard();
-    get('requests', 'listRequests', null, true).then(function (d) {
+    get('requests', 'listRequests', null).then(function (d) {
       if (gone()) return;
       var me = T.user().name, past = T.pastoral(), tabs = [['decide', 'Waiting for me (' + d.toDecide.length + ')'], ['mine', 'My requests']].concat(past ? [['all', 'All requests']] : []);
       if (!RF) RF = d.toDecide.length ? 'decide' : 'mine';
@@ -135,7 +142,7 @@
       }).catch(function (e) { T.busy(b, false); P.toast(e.message); });
     };
   }
-  P.newRequest = function () { get('requests', 'listRequests', null, true).then(function (d) { newRequest(d.types); }).catch(function (e) { P.toast(e.message); }); };
+  P.newRequest = function () { get('requests', 'listRequests', null).then(function (d) { newRequest(d.types); }).catch(function (e) { P.toast(e.message); }); };
 
   // ---------- Away & activity log ----------
   function tripRow(a, canBack) {
@@ -145,7 +152,7 @@
   }
   P.views.away = { title: 'Away & activity log', icon: I.plane, render: function (v) {
     T.loading(v); var gone = T.guard();
-    get('away', 'listAway', null, true).then(function (d) {
+    get('away', 'listAway', null).then(function (d) {
       if (gone()) return;
       var past = T.pastoral(), today = D10(new Date());
       v.innerHTML = '<div class="grid g2" style="align-items:start"><div style="display:grid;gap:16px">' +
@@ -178,7 +185,7 @@
   var LEVEL = { 'Member': 1, 'Steward': 3, 'Group leader': 4, 'Department head': 4 };
   P.views.home = { title: 'My space', icon: I.home, render: function (v) {
     T.loading(v); var gone = T.guard();
-    get('home', 'home', null, true).then(function (d) {
+    get('home', 'home', null).then(function (d) {
       if (gone()) return;
       var u = T.user(), me = d.me, g = d.group, lv = me ? (LEVEL[me.role] || 1) : 0, h = new Date().getHours();
       P.badges.unread = 0; P.app.nav();

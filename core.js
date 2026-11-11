@@ -30,11 +30,11 @@
     if (!P.API) return Promise.reject(new Error('The app is not connected to the church Sheet yet (config.js).'));
     var body = Object.assign({ action: action }, data || {});
     var ctl = window.AbortController ? new AbortController() : null;
-    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 25000);
+    var slow = false, timer = setTimeout(function () { slow = true; if (ctl) ctl.abort(); }, 60000);
     return fetch(P.API, { method: 'POST', body: JSON.stringify(body), redirect: 'follow', signal: ctl && ctl.signal })
       .then(function (r) { return r.json(); })
       .then(function (j) { clearTimeout(timer); if (!j.ok) { var e = new Error(j.error || 'Something went wrong'); e.auth = j.auth; throw e; } return j; },
-        function (e) { clearTimeout(timer); var x = new Error('No connection to the church server'); x.network = true; throw x; });
+        function (e) { clearTimeout(timer); var x = new Error(slow ? 'The church server is taking long to answer. Please try again in a moment.' : (P.online() ? 'Could not reach the church server. Check your internet and try again.' : 'You are offline.')); x.network = true; throw x; });
   };
 
   P.config = function () { return P.get('config', P.DEFAULT_CONFIG); };

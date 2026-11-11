@@ -22,6 +22,7 @@
   function pastoral() { return ['Admin', 'Leader'].indexOf(user().role) >= 0; }
   function api(action, data) {
     if (!P.online()) return Promise.reject(new Error('You are offline. This change needs internet; please try again when connected.'));
+    if (!/^(list|get|lookups|badges|home|dashboard|adminList|adminInfo|gridLookups|config|checkPhone)/.test(action)) P._force = true; // a change was made: next screen loads fresh
     return P.call(action, Object.assign({ token: P.get('token') }, data || {})).catch(function (e) {
       if (e.auth) P.app.showLogin(e.message);
       throw e;
@@ -40,7 +41,11 @@
   var RT = 0;
   function gone(tk, vw) { return tk !== RT || P.app.view() !== vw; } // a newer screen has been opened since
   function stale() { [].slice.call(arguments).forEach(function (k) { S[k] = null; }); }
-  P.clearCache = function () { KEYS.forEach(function (k) { S[k] = null; P.set('c_' + k, null); }); P.taskCount = 0; };
+  P.clearCache = function () {
+    KEYS.forEach(function (k) { S[k] = null; P.set('c_' + k, null); }); P.taskCount = 0;
+    try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('pw_c_') === 0) localStorage.removeItem(k); }); } catch (e) {}
+    Object.keys(S).forEach(function (k) { S[k] = null; });
+  };
 
   // ---------- helpers ----------
   function nm(p) { return (p.first + ' ' + p.last).trim(); }
@@ -66,7 +71,7 @@
       return '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + esc(l) + '</option>';
     }).join('');
   }
-  function loading(v) { v.innerHTML = '<div class="card muted">Loading…</div>'; }
+  function loading(v) { v.innerHTML = '<div class="card muted">Loading… <span class="small">(the church server can take a few seconds)</span></div>'; }
   function fail(v, e) { v.innerHTML = '<div class="card"><h3>Could not load this list</h3><p class="muted">' + esc(e.message) + '</p><button class="btn sm" data-reload="1">Try again</button></div>'; }
   function csv(name, rows) {
     var t = rows.map(function (r) { return r.map(function (c) { c = String(c == null ? '' : c); return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(','); }).join('\r\n');
