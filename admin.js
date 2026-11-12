@@ -4,8 +4,8 @@
   var P = window.Pathway, T = P.T, esc = P.esc, $ = function (id) { return document.getElementById(id); };
   var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>';
   var SEC_ADMIN = [['overview', 'Overview'], ['workers', 'Workers & PINs'], ['campuses', 'Campuses'], ['events', 'Events & QR'], ['stages', 'Pathway stages'], ['groups', 'Small groups'],
-    ['departments', 'Departments'], ['approvals', 'Approvals'], ['templates', 'Service templates'], ['settings', 'Rules'], ['bulk', 'Bulk upload'], ['backup', 'Export & backup'], ['audit', 'Audit trail']];
-  var SEC_LEADER = [['workers', 'My team & PINs'], ['bulk', 'Bulk upload']];
+    ['departments', 'Departments'], ['approvals', 'Approvals'], ['rules', 'Approval routes'], ['pins', 'PIN requests'], ['templates', 'Service templates'], ['settings', 'Rules'], ['bulk', 'Bulk upload'], ['backup', 'Export & backup'], ['audit', 'Audit trail']];
+  var SEC_LEADER = [['workers', 'My team & PINs'], ['pins', 'PIN requests'], ['bulk', 'Bulk upload']];
   var INTRO = {
     workers: 'People who sign in to Pathway. Set or reset a PIN here; a locked worker is unlocked by giving a new PIN. Removing someone signs them out everywhere but keeps their history.',
     campuses: 'Renaming a campus updates it everywhere (people, members, groups, workers, events).',
@@ -17,7 +17,7 @@
   };
   var SEC = 'overview';
   P.openAdmin = function (sec) { SEC = sec; P.app.go('admin'); };
-  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-admin]'); if (b) { if (P.closeDrawer) P.closeDrawer(); P.openAdmin(b.dataset.admin); } });
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-admin]'); if (b) { if (P.closeDrawer) P.closeDrawer(true); P.openAdmin(b.dataset.admin); } });
   function secs() { return (T.user().role === 'Admin' ? SEC_ADMIN : SEC_LEADER).map(function (x) { return [x[0], P.cwText(x[1])]; }); }
 
   P.views.admin = { get title() { var u = P.app && P.app.user && P.app.user(); return u && u.role === 'Leader' ? 'Team & PINs' : 'Admin & settings'; }, icon: ICON, render: function (v) {
@@ -26,7 +26,7 @@
     $('aseg').onclick = function (e) { var b = e.target.closest('[data-sec]'); if (b) { SEC = b.dataset.sec; P.app.render(); } };
     var box = $('abox'), gone = T.guard();
     box.innerHTML = '<div class="card muted">Loading…</div>';
-    var f = { overview: overview, approvals: approvals, templates: templates, backup: backup, audit: audit, bulk: bulk }[SEC];
+    var f = { overview: overview, approvals: approvals, templates: templates, backup: backup, audit: audit, bulk: bulk, rules: P.adminRules, pins: P.adminPins }[SEC];
     (f ? f(box, gone) : listSection(box, SEC, gone)).catch(function (e) { if (!gone()) T.fail(box, e); });
   } };
 
@@ -109,6 +109,7 @@
   function cell(f, r) {
     var x = r[f.k];
     if (f.t === 'yesno') return x === 'No' ? '<span class="tag grey">No</span>' : '<span class="tag green">Yes</span>';
+    if (f.t === 'tick') return /^y/i.test(x) ? '<span class="tag green">Yes</span>' : '<span class="tag grey">No</span>';
     return esc(x || '—');
   }
   function listSection(box, list, gone, title) {
@@ -149,6 +150,7 @@
     if (r && r._num && f.k === 'Value') t = 'number';
     var el;
     if (t === 'yesno') el = '<select class="inp" id="' + id + '">' + T.opts(['Yes', 'No'], v || 'Yes') + '</select>';
+    else if (t === 'tick') el = '<select class="inp" id="' + id + '">' + T.opts(['No', 'Yes'], /^y/i.test(v) ? 'Yes' : 'No') + '</select>';
     else if (t === 'select') el = '<select class="inp" id="' + id + '">' + T.opts(opts || [], v, f.blank || '—') + '</select>';
     else if (t === 'suggest') el = '<input class="inp" id="' + id + '" list="' + id + '_l" value="' + esc(v) + '" placeholder="Choose or type"><datalist id="' + id + '_l">' + (opts || []).map(function (o) { return '<option value="' + esc(o) + '">'; }).join('') + '</datalist>';
     else el = '<input class="inp" id="' + id + '" type="' + (t === 'number' ? 'number' : 'text') + '" value="' + esc(v) + '"' + (t === 'number' ? ' inputmode="numeric"' : '') + '>';

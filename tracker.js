@@ -22,7 +22,7 @@
   function pastoral() { return ['Admin', 'Leader'].indexOf(user().role) >= 0; }
   function api(action, data) {
     if (!P.online()) return Promise.reject(new Error('You are offline. This change needs internet; please try again when connected.'));
-    if (!/^(list|get|lookups|badges|home|dashboard|adminList|adminInfo|gridLookups|config|checkPhone|formList|formGet|msgList|msgGet|msgAudience|autoPreview)/.test(action)) P._force = true; // a change was made: next screen loads fresh
+    if (!/^(list|get|lookups|badges|home|dashboard|adminList|adminInfo|gridLookups|config|checkPhone|formList|formGet|msgList|msgGet|msgAudience|autoPreview|today|notes|countDay|countInsights|online|pinList|rulesGet|ping|calList)/.test(action)) P._force = true; // a change was made: next screen loads fresh
     return P.call(action, Object.assign({ token: P.get('token') }, data || {})).catch(function (e) {
       if (e.auth) P.app.showLogin(e.message);
       throw e;
@@ -85,11 +85,13 @@
 
   // ---------- drawer ----------
   function openDrawer(html) {
+    if (!$('drawer').classList.contains('open')) try { history.pushState({ v: P.app.view(), d: 1 }, '', '#' + P.app.view() + '/open'); } catch (e) {} // the phone's back button closes it
     $('drawer').innerHTML = html; $('drawer').classList.add('open'); $('ov').classList.add('open');
     document.body.classList.add('locked'); $('drawer').scrollTop = 0;
   }
-  P.closeDrawer = function () {
+  P.closeDrawer = function (fromBack) {
     var d = $('drawer'); if (!d || !d.classList.contains('open')) return;
+    if (!fromBack && history.state && history.state.d) { history.back(); return; }
     d.classList.remove('open'); $('ov').classList.remove('open'); document.body.classList.remove('locked');
     if (S._dirty) { S._dirty = false; P.app.render(); }
   };

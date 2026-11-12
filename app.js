@@ -15,8 +15,21 @@
   var STAFF_NAV = ['dash', 'tasks', 'people', 'path', 'capture', 'qr', 'queue', 'members', 'groups', 'stewards', 'calendar', 'grid', 'requests', 'away', 'home'];
   var BY_ROLE = { 'Admin': STAFF_NAV.concat(['forms', 'messages', 'admin']), 'Leader': STAFF_NAV.concat(['forms', 'messages', 'admin']), 'Follow-up worker': ['tasks', 'people', 'capture', 'queue', 'home', 'calendar', 'grid', 'requests', 'away'],
     'Counsellor': ['capture', 'qr', 'queue', 'home', 'calendar', 'grid', 'requests', 'away'], 'Member': ['home', 'calendar', 'grid', 'requests', 'away'] };
-  var SECT = { dash: 'Overview', members: 'Church', groups: 'Church', stewards: 'Church', calendar: 'Church', grid: 'Church', requests: 'Church', away: 'Church', home: 'Church', forms: 'Reach out', messages: 'Reach out', admin: 'System' };
-  var SHORT = { dash: 'Dashboard', tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards', calendar: 'Calendar', grid: 'Grids', requests: 'Requests', away: 'Away', home: 'My space', forms: 'Polls', messages: 'Messages', admin: 'Admin' };
+  var SECT = { today: 'Overview', chat: 'Reach out', games: 'Church', count: 'Church', online: 'System', dash: 'Overview', members: 'Church', groups: 'Church', stewards: 'Church', calendar: 'Church', grid: 'Church', requests: 'Church', away: 'Church', home: 'Church', forms: 'Reach out', messages: 'Reach out', admin: 'System' };
+  var SHORT = { today: 'Today', chat: 'Chat', games: 'Games', count: 'Count', online: 'Online', calendar: 'Calendar', dash: 'Dashboard', tasks: 'Follow-ups', people: 'Converts', path: 'Board', capture: 'Capture', qr: 'QR', members: 'Members', groups: 'Groups', stewards: 'Stewards', calendar: 'Calendar', grid: 'Grids', requests: 'Requests', away: 'Away', home: 'My space', forms: 'Polls', messages: 'Messages', admin: 'Admin' };
+  /** The menu for this person: role decides the screens; job ticks (usher, head usher…) add more. The first four go on the phone's bottom bar. */
+  function navFor(u) {
+    if (!u) return [];
+    var t = u.title || u.role, ticks = u.ticks || [], base = (BY_ROLE[u.role] || []).slice(), pastor = ['Resident Pastor', 'Assistant Resident Pastor', 'Pastor'].indexOf(t) >= 0;
+    if (pastor) base = base.filter(function (k) { return k !== 'admin'; });
+    var usher = ticks.indexOf('Usher') >= 0 || ticks.indexOf('Head usher') >= 0, counts = usher || u.role === 'Admin' || u.role === 'Leader';
+    var all = ['today', 'chat'].concat(base.filter(function (k) { return k !== 'home'; })).concat(counts ? ['count'] : []).concat(['games']).concat(u.role === 'Admin' || u.role === 'Leader' ? ['online'] : []).concat(['home']);
+    var pri = usher && u.role !== 'Admin' && u.role !== 'Leader' ? ['today', 'count', 'chat', 'calendar'] : u.role === 'Admin' ? ['today', 'people', 'chat', 'count'] :
+      u.role === 'Leader' ? ['today', pastor ? 'people' : 'members', 'chat', 'calendar'] : u.role === 'Follow-up worker' ? ['today', 'tasks', 'chat', 'calendar'] : ['today', 'calendar', 'chat', 'games'];
+    pri = pri.filter(function (k) { return all.indexOf(k) >= 0; });
+    return pri.concat(all.filter(function (k) { return pri.indexOf(k) < 0; }));
+  }
+  P.navFor = function () { return navFor(USER); };
   function item(k) { return k === 'more' ? ['More', I.more] : (P.views[k] ? [P.views[k].title, P.views[k].icon] : NAV[k] || ['Welcome', '']); }
   var VIEW = null, USER = P.get('user'), QN = 0;
 
@@ -82,14 +95,17 @@
     $('login').hidden = true; $('app').hidden = false;
     var cfg = P.config(); $('churchName').textContent = cfg.church || 'The Elevation Church';
     $('me').textContent = USER.name.split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase();
-    $('me').title = USER.name + ' · ' + USER.role + ' · tap to sign out';
-    $('sidefoot').innerHTML = esc(USER.name) + '<br><span style="opacity:.7">' + esc(USER.role) + (USER.campus ? ' · ' + esc(USER.campus) : '') + '</span>';
-    var nav = BY_ROLE[USER.role] || [];
+    $('me').title = USER.name + ' · ' + (USER.title || USER.role) + ' · tap for your account and appearance';
+    $('sidefoot').innerHTML = esc(USER.name) + '<br><span style="opacity:.7">' + esc(USER.ltype || USER.title || USER.role) + (USER.campus ? ' · ' + esc(USER.campus) : '') + '</span>';
+    var nav = navFor(USER), hv = (location.hash || '').slice(1).split('/')[0];
+    if (hv && (nav.indexOf(hv) >= 0 || hv === 'more')) VIEW = hv;
     if (nav.indexOf(VIEW) < 0 && VIEW !== 'more') VIEW = nav[0] || 'none';
+    try { history.replaceState({ v: VIEW }, '', '#' + VIEW); } catch (e) {}
+    if (P.shellStart) P.shellStart();
     netState(); render(); trySync(); if (P.refreshBadges) setTimeout(P.refreshBadges, 800);
   }
   function navHtml() {
-    var B = P.badges || {}, nav = BY_ROLE[USER.role] || [], last = null, cnt = { queue: QN, tasks: P.taskCount || 0, requests: B.decide || 0, home: (B.unread || 0) + (B.duty || 0) };
+    var B = P.badges || {}, nav = navFor(USER), last = null, cnt = { queue: QN, tasks: P.taskCount || 0, requests: B.decide || 0, home: (B.unread || 0) + (B.duty || 0), chat: B.chat || 0 };
     $('sidenav').innerHTML = nav.map(function (k) {
       var l = SECT[k] || 'Convert pathway', h = '', it = item(k);
       if (l !== last) { h = '<div class="navl">' + l + '</div>'; last = l; }
@@ -105,22 +121,24 @@
     }).join('');
   }
   function vMore() {
-    var nav = BY_ROLE[USER.role] || [];
-    return '<div class="card">' + nav.map(function (k) {
-      var it = item(k);
-      var B = P.badges || {}, n = { tasks: P.taskCount, requests: B.decide, home: (B.unread || 0) + (B.duty || 0), queue: QN }[k];
-      return '<div class="row click" data-go="' + k + '"><div class="av" style="background:var(--teal-l);color:var(--teal)">' + it[1].replace('<svg', '<svg width="18" height="18"') + '</div><div class="meta"><b>' + it[0] + '</b></div>' + (n ? '<span class="tag gold">' + n + '</span>' : '') + '<span class="muted">›</span></div>';
-    }).join('') + '<div class="row click" data-out="1"><div class="av">' + I.out.replace('<svg', '<svg width="18" height="18"') + '</div><div class="meta"><b>Sign out</b><span>' + esc(USER.name) + ' · ' + esc(USER.role) + '</span></div></div></div>';
+    var nav = navFor(USER).slice(4), B = P.badges || {}, last = null, h = '';
+    nav.forEach(function (k) {
+      var it = item(k), l = SECT[k] || 'Convert pathway', n = { tasks: P.taskCount, requests: B.decide, home: (B.unread || 0) + (B.duty || 0), queue: QN }[k];
+      if (l !== last) { h += (last ? '</div>' : '') + '<div class="sec">' + l + '</div><div class="tiles">'; last = l; }
+      h += '<button class="tile" data-go="' + k + '">' + it[1] + '<span>' + esc(SHORT[k] || it[0]) + '</span>' + (n ? '<i class="ct">' + n + '</i>' : '') + '</button>';
+    });
+    return h + (last ? '</div>' : '') + '<div class="sec">Account</div><div class="tiles"><button class="tile" data-acct="1">' + I.more + '<span>Appearance &amp; account</span></button><button class="tile" data-out="1">' + I.out + '<span>Sign out</span></button></div>';
   }
   P.app = {
     user: function () { return USER; }, view: function () { return VIEW; },
-    go: function (k) { VIEW = k; render(); window.scrollTo(0, 0); },
+    go: function (k) { if (VIEW !== k) try { history.pushState({ v: k }, '', '#' + k); } catch (e) {} VIEW = k; render(); window.scrollTo(0, 0); },
+    show: function (k) { VIEW = k; render(); window.scrollTo(0, 0); }, home: function () { return navFor(USER)[0]; },
     render: function () { render(); }, nav: function () { if (USER) navHtml(); },
     showLogin: function (m) { showLogin(m); }
   };
   document.addEventListener('click', function (e) {
-    var g = e.target.closest('[data-go]'); if (g) { if (P.closeDrawer) P.closeDrawer(); VIEW = g.dataset.go; render(); window.scrollTo(0, 0); return; }
-    if (e.target.closest('[data-out]') || e.target.closest('#me')) signOut();
+    var g = e.target.closest('[data-go]'); if (g) { if (P.closeDrawer) P.closeDrawer(true); P.app.go(g.dataset.go); return; }
+    if (e.target.closest('[data-out]')) signOut();
   });
   function render() {
     navHtml();

@@ -28,7 +28,8 @@
     </div>
     <div class="err" id="lerr"></div>
     <button class="btn" id="lbtn" style="width:100%;padding:12px" type="submit">Sign in</button>
-    <div class="small muted" style="text-align:center;margin-top:12px">Forgot your PIN? Ask your church admin to set a new one.</div>
+    <div style="display:flex;justify-content:space-between;gap:10px;margin-top:12px;font-size:13px;flex-wrap:wrap"><a href="#" id="forgot">Forgot PIN?</a><a href="#" id="firsttime">First time? Set up my PIN</a></div>
+    <div id="pinflow" hidden></div>
     <a class="btn ghost" href="events.html" style="width:100%;margin-top:12px;justify-content:center">🗓️ See what’s on at church (no sign-in)</a>
     <div id="firstSet" hidden style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
       <b>Move our data from the Google version</b><div class="small muted">Sign in with your existing <b>admin</b> name and PIN. Everything (people, members, PINs, history) is copied to this faster server. Takes under a minute.</div>
@@ -53,9 +54,10 @@
   </aside>
   <main>
     <div class="top">
-      <h1 id="title">Capture convert</h1><span class="sp"></span>
+      <button class="iconbtn" id="backbtn" aria-label="Back" hidden>‹</button><h1 id="title">Today</h1><span class="sp"></span>
       <span class="pill" id="net"><span class="dot"></span><span id="netl">Online</span></span>
-      <button class="av" id="me" title="Sign out">--</button>
+      <button class="iconbtn" id="bell" aria-label="Notifications">🔔<i id="bellct" hidden></i></button>
+      <button class="av" id="me" title="Account and appearance">--</button>
     </div>
     <div class="wrap" id="view"></div>
   </main>
@@ -63,6 +65,7 @@
 <nav class="mnav" id="mnav" hidden></nav>
 <div class="ov" id="ov"></div>
 <div class="drawer" id="drawer" role="dialog" aria-label="Details"></div>
+<button class="fab" id="fab" aria-label="Quick actions" hidden>+</button>
 <div class="toast" id="toast"></div>
 
 <script src="config.js"></script>
@@ -75,6 +78,13 @@
 <script src="forms.js"></script>
 <script src="msg.js"></script>
 <script src="calendar.js"></script>
+<script src="shell.js"></script>
+<script src="today.js"></script>
+<script src="count.js"></script>
+<script src="people2.js"></script>
+<script src="gametpl.js"></script>
+<script src="games.js"></script>
+<script src="chat.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
