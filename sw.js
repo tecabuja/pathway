@@ -1,5 +1,5 @@
 /* Pathway service worker: keeps the app working offline. Change VERSION after every update so phones pick it up. */
-var VERSION = 'pathway-v13';
+var VERSION = 'pathway-v14';
 var FILES = ['./', 'index.html', 'register.html', 'app.css', 'config.js', 'core.js', 'app.js', 'tracker.js', 'church.js', 'grid.js', 'admin.js', 'guide.html', 'register.js', 'forms.js', 'msg.js', 'answer.html', 'answer.js', 'calendar.js', 'events.html', 'events.js', 'shell.js', 'today.js', 'count.js', 'people2.js', 'gametpl.js', 'games.js', 'chat.js', 'play.html', 'play.js', 'host.html', 'host.js', 'lib/qrcode.js',
   'manifest.webmanifest', 'img/logo-full.png', 'img/logo-mark.png', 'img/icon-192.png', 'img/icon-512.png', 'img/apple-touch-icon.png'];
 self.addEventListener('install', function (e) {

@@ -65,6 +65,15 @@
     var me = (user().name || '').split(' ')[0], ch = P.config().church || 'The Elevation Church';
     return P.waLink(p.phone, 'Hi ' + p.first + ', it\'s ' + me + ' from ' + ch + ' 😊 We are so glad you made a decision with us. How are you doing this week?');
   }
+  // One-tap Call + WhatsApp (members, small groups, converts). Who appears is already limited by the server:
+  // Super Admin and pastors see everyone; leaders their own team; follow-up workers only people assigned to them.
+  function hello(name) { var me = (user().name || '').split(' ')[0], ch = P.config().church || 'The Elevation Church'; return 'Hi ' + String(name || '').split(' ')[0] + ', it\'s ' + me + ' from ' + ch + ' 😊'; }
+  function cvText(p) { return hello(p.first || nm(p)) + ' We are so glad you made a decision with us. How are you doing this week?'; }
+  function cbtns(ph, txt, noWa) {
+    if (!digits(ph)) return '';
+    return '<span style="display:inline-flex;gap:6px;margin-left:auto;flex-shrink:0"><a class="btn ghost sm" href="' + P.telLink(ph) + '" data-stop="1" aria-label="Call" title="Call">' + I.phone + '</a>' +
+      (noWa ? '' : '<a class="btn ghost sm wa" href="' + P.waLink(ph, txt) + '" target="_blank" rel="noopener" data-stop="1" aria-label="WhatsApp" title="WhatsApp">' + I.wa + '</a>') + '</span>';
+  }
   function opts(list, cur, blank) {
     return (blank != null ? '<option value="">' + esc(blank) + '</option>' : '') + list.map(function (x) {
       var v = typeof x === 'string' ? x : x.v, l = typeof x === 'string' ? x : x.l;
@@ -131,7 +140,7 @@
     var ps = peopleRows();
     $('ptable').innerHTML = '<table><thead><tr><th>Name</th><th>Stage</th><th class="hm">' + P.esc(P.cw()) + ' · Area</th><th class="hm">In charge</th><th class="hm">Last contact</th><th>Status</th></tr></thead><tbody>' +
       (ps.map(function (p) {
-        return '<tr class="click" data-person="' + esc(p.id) + '"><td><div style="display:flex;gap:10px;align-items:center"><div class="av">' + esc(ini(nm(p))) + '</div><div><b>' + esc(nm(p)) + '</b>' + (p.dup ? ' <span class="tag amber" title="Same phone as ' + esc(p.dup) + '">Check duplicate</span>' : '') + '<div class="small muted">' + esc(p.phone) + '</div></div></div></td>' +
+        return '<tr class="click" data-person="' + esc(p.id) + '"><td><div style="display:flex;gap:10px;align-items:center"><div class="av">' + esc(ini(nm(p))) + '</div><div><b>' + esc(nm(p)) + '</b>' + (p.dup ? ' <span class="tag amber" title="Same phone as ' + esc(p.dup) + '">Check duplicate</span>' : '') + '<div class="small muted">' + esc(p.phone) + '</div></div>' + cbtns(p.phone, cvText(p), !p.wa) + '</div></td>' +
           '<td><span class="tag">' + p.stage + '. ' + esc(short(p.stage)) + '</span></td><td class="hm">' + esc(p.campus || '—') + (p.area ? ' · ' + esc(p.area) : '') + '</td>' +
           '<td class="hm">' + (p.owner === 'Unassigned' ? '<span class="tag red">Unassigned</span>' : esc(p.owner)) + '</td><td class="hm">' + ago(p.lastContact ? daysIn(p.lastContact) : null) + '</td><td>' + stTag(p.status) + '</td></tr>';
       }).join('') || '<tr><td colspan="6" class="empty">No one matches these filters</td></tr>') + '</tbody></table>';
@@ -327,7 +336,7 @@
     var ms = memberRows();
     $('mtable').innerHTML = '<table><thead><tr><th>Name</th><th>Role</th><th class="hm">Small group</th><th class="hm">Department</th><th class="hm">' + P.esc(P.cw()) + ' · Area</th><th class="hm">Birthday</th></tr></thead><tbody>' +
       (ms.map(function (m) {
-        return '<tr class="click" data-member="' + esc(m.key) + '"><td><div style="display:flex;gap:10px;align-items:center"><div class="av">' + esc(ini(m.name)) + '</div><div><b>' + esc(m.name) + '</b><div class="small muted">' + (m.joined ? 'Member since ' + fmt(m.joined) : esc(m.phone)) + '</div></div></div></td><td>' + roleTag(m.role) + '</td>' +
+        return '<tr class="click" data-member="' + esc(m.key) + '"><td><div style="display:flex;gap:10px;align-items:center"><div class="av">' + esc(ini(m.name)) + '</div><div><b>' + esc(m.name) + '</b><div class="small muted">' + (m.joined ? 'Member since ' + fmt(m.joined) : esc(m.phone)) + '</div></div>' + cbtns(m.phone, hello(m.name)) + '</div></td><td>' + roleTag(m.role) + '</td>' +
           '<td class="hm">' + esc(m.group || '—') + '</td><td class="hm">' + esc(m.dept || '—') + '</td><td class="hm">' + esc(m.campus || '—') + (m.area ? ' · ' + esc(m.area) : '') + '</td><td class="hm">' + esc(m.bmonth || '—') + '</td></tr>';
       }).join('') || '<tr><td colspan="6" class="empty">' + (S.members.members.length ? 'No one matches these filters' : 'No members yet. Converts join automatically after Membership Class. Tap + Add member, or use Bulk upload in Admin & settings for many at once.') + '</td></tr>') + '</tbody></table>';
     $('mcount').textContent = ms.length + ' members';
@@ -413,7 +422,8 @@
   } };
   function openGroup(name) {
     openDrawer(dhead(name, 'Loading…'));
-    api('getGroup', { name: name }).then(function (j) {
+    Promise.all([api('getGroup', { name: name }), load('people', 'listPeople').catch(function () { return null; })]).then(function (rr) {
+      var j = rr[0], pid = {}; ((rr[1] && rr[1].people) || []).forEach(function (x) { pid[x.id] = x; });
       var g = j.group, rs = j.reports, avg = rs.length ? Math.round(rs.slice(0, 4).reduce(function (t, x) { return t + x.attendance; }, 0) / Math.min(4, rs.length)) : '—';
       var today = new Date().toISOString().slice(0, 10), total = j.members.length + j.converts.length;
       var h = dhead(g.name, esc(g.area || '') + (g.campus ? ' · ' + esc(g.campus) : '') + (g.day ? ' · meets ' + esc(g.day) : '') + (g.leader ? ' · leader ' + esc(g.leader) : '')) + '<div class="db">' +
@@ -426,9 +436,9 @@
           return '<div class="row"><div class="av" style="background:var(--teal-l);color:var(--teal)">' + x.attendance + '</div><div class="meta"><b>' + esc(x.notes || 'Group meeting') + '</b><span>' + fmt(x.date) + ' · ' + x.guests + ' first-timer(s) · by ' + esc(x.by) + '</span></div></div>';
         }).join('') || '<div class="muted small">No reports yet</div>') + '</div>' +
         '<div class="card"><h3>People in this group</h3>' + (j.converts.map(function (c) {
-          return '<div class="row click" data-person="' + esc(c.id) + '"><div class="av">' + esc(ini(c.name)) + '</div><div class="meta"><b>' + esc(c.name) + '</b><span>New convert · ' + esc(c.stage) + '</span></div><span class="muted">›</span></div>';
+          return '<div class="row click" data-person="' + esc(c.id) + '"><div class="av">' + esc(ini(c.name)) + '</div><div class="meta"><b>' + esc(c.name) + '</b><span>New convert · ' + esc(c.stage) + '</span></div>' + (pid[c.id] ? cbtns(pid[c.id].phone, cvText(pid[c.id]), !pid[c.id].wa) : '<span class="muted">›</span>') + '</div>';
         }).join('') + j.members.map(function (m) {
-          return '<div class="row"><div class="av">' + esc(ini(m.name)) + '</div><div class="meta"><b>' + esc(m.name) + '</b><span>' + esc(m.role) + (m.dept ? ' · ' + esc(m.dept) : '') + '</span></div></div>';
+          return '<div class="row"><div class="av">' + esc(ini(m.name)) + '</div><div class="meta"><b>' + esc(m.name) + '</b><span>' + esc(m.role) + (m.dept ? ' · ' + esc(m.dept) : '') + '</span></div>' + cbtns(m.phone, hello(m.name)) + '</div>';
         }).join('') || '<div class="muted small">No one in this group yet</div>') + '</div></div>';
       openDrawer(h);
       $('gsave').onclick = function () {
